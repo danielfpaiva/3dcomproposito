@@ -1,83 +1,96 @@
 
+# Duas Novas Areas: Donativos e Inscricao de Beneficiarios
 
-# Campos em Falta no Formulario de Contribuicao
+## Resumo
 
-## Comparacao com o formulario oficial da 3D-Mobility.org
+Adicionar duas funcionalidades novas ao PrintImpact Connect:
 
-Depois de analisar o formulario oficial dos criadores do TMT, identifiquei campos importantes que faltam na nossa aplicacao e que sao relevantes para o contexto portugues.
+1. **Pagina de Donativos** -- para quem quer ajudar financeiramente (comprar filamento, custos de envio, futuras acoes)
+2. **Pagina de Inscricao de Beneficiarios** -- para familias/instituicoes que precisam de cadeiras de rodas (ou futuros projetos similares)
 
-### Campos que devemos adicionar
+---
 
-1. **Volume de impressao (build volume)** -- CRITICO
-   - O TMT exige no minimo 256 x 256 x 256 mm de volume de construcao
-   - Sem isto, podemos atribuir pecas a alguem cuja impressora nao as consegue imprimir
-   - Implementacao: campo numerico simples ou checkbox "A minha impressora tem pelo menos 256x256x256mm"
+## 1. Pagina de Donativos (`/donate`)
 
-2. **Nivel de experiencia**
-   - Iniciante / Intermedio / Experiente
-   - Ajuda a decidir a quem atribuir pecas mais complexas ou criticas
-   - Implementacao: selecao visual com 3 opcoes (como o passo de disponibilidade)
+Uma pagina simples e emocional com:
+- Explicacao do impacto de cada donativo (ex: "10EUR = 1kg de PETG = ~3 pecas")
+- Botao para contactar o criador Gabriel da Smart 3d da facilidade esta parte por agora
+- Opcao de deixar nome e email para agradecimento publico (opcional)
+- Contador de donativos recebidos (opcional, fase futura)
 
-3. **Tempo estimado de entrega (turnaround)**
-   - 1-2 semanas / 2-4 semanas / 4-6 semanas / 6+ semanas
-   - Essencial para planear prazos de conclusao de cadeiras
-   - Implementacao: selecao visual com 4 opcoes
 
-4. **Disponibilidade para colaborar com outros makers**
-   - Checkbox simples: "Disponivel para ajudar outros makers / builds partilhadas"
-   - Util para o agrupamento regional que ja temos
+## 2. Pagina de Inscricao de Beneficiarios (`/request`)
 
-### Campos do formulario oficial que NAO precisamos
+Formulario para quem precisa de uma cadeira de rodas (ou equipamento similar):
+- Nome do responsavel / instituicao
+- Email e telefone de contacto
+- Localizacao (regiao)
+- Para quem e (crianca/adulto, idade aproximada)
+- Descricao da necessidade
+- Como soube do projeto
+- Estado: "pendente" ate um organizador validar
 
-- Password/conta (usamos sistema de token)
-- Pais (somos so Portugal)
-- Tipo de maker (individual vs makerspace -- comunidade pequena, nao e relevante)
-- Verificacao de qualidade com test prints (demasiado complexo para o MVP)
-- Portfolio/redes sociais
-- Termos e condicoes legais (nao somos a MakeGood INC)
-- Marcas de impressora multiplas (ja capturamos o modelo especifico)
+---
 
 ## Detalhes Tecnicos
 
-### 1. Migracao SQL
-Adicionar colunas a tabela `contributors`:
-- `build_volume_ok` (boolean, default false) -- confirma que tem pelo menos 256x256x256mm
-- `experience_level` (text, default 'intermediate') -- beginner, intermediate, expert
-- `turnaround_time` (text, nullable) -- estimativa de tempo de entrega
-- `willing_to_collaborate` (boolean, default false) -- disponivel para builds partilhadas
+### Base de Dados -- 2 novas tabelas
 
-### 2. Formulario de contribuicao (Contribute.tsx)
-Reorganizar os passos:
-- Passo 1: Nome (sem alteracao)
-- Passo 2: Localizacao (sem alteracao)
-- Passo 3: Impressora + novo checkbox de volume minimo (256x256x256mm)
-- Passo 4: Materiais (sem alteracao)
-- Passo 5: Experiencia (NOVO) -- 3 opcoes visuais
-- Passo 6: Disponibilidade + tempo de entrega estimado (ATUALIZADO -- juntar turnaround aqui)
-- Passo 7: Envio + colaboracao (ATUALIZADO -- adicionar checkbox de colaboracao)
-- Passo 8: Ativar (email + telefone, sem alteracao)
+**Tabela `donations`:**
+- `id` (uuid, PK)
+- `donor_name` (text, nullable -- anonimo se quiser)
+- `donor_email` (text, nullable)
+- `amount_cents` (integer) -- valor em centimos
+- `method` (text) -- "mbway", "transferencia", "paypal", "outro"
+- `message` (text, nullable) -- mensagem opcional
+- `public_name` (boolean, default false) -- se quer nome visivel
+- `created_at` (timestamp)
 
-### 3. Dialogo de adicao manual (AddContributorDialog.tsx)
-- Adicionar campos: volume de impressao (checkbox), experiencia (select), turnaround (select), colaboracao (checkbox)
+RLS: Qualquer pessoa pode inserir. So organizadores podem ver/gerir.
 
-### 4. Admin (Admin.tsx)
-- Mostrar nivel de experiencia e turnaround na tabela de voluntarios
-- Mostrar aviso visual se o volume de impressao nao esta confirmado
+**Tabela `beneficiary_requests`:**
+- `id` (uuid, PK)
+- `contact_name` (text)
+- `contact_email` (text)
+- `contact_phone` (text, nullable)
+- `region` (text)
+- `beneficiary_age` (text) -- ex: "3 anos", "adulto"
+- `beneficiary_type` (text) -- "crianca", "adulto"
+- `description` (text) -- descricao da necessidade
+- `how_found_us` (text, nullable)
+- `status` (text, default "pendente") -- pendente, em_avaliacao, aprovado, concluido
+- `notes` (text, nullable) -- notas internas dos organizadores
+- `created_at` (timestamp)
+- `updated_at` (timestamp)
 
-### 5. Filtros (ContributorsFilters.tsx)
-- Adicionar filtro por nivel de experiencia
-- Adicionar filtro por volume de impressao confirmado
+RLS: Qualquer pessoa pode inserir. So organizadores podem ver/gerir.
 
-### 6. Atribuicao de pecas (PartAssignmentSelect.tsx)
-- Mostrar badge de experiencia junto ao nome
-- Destacar/avisar se o voluntario nao confirmou volume de impressao suficiente
+### Novas Paginas
 
-### Ficheiros afetados
-1. `supabase/migrations/` -- nova migracao (4 colunas novas)
-2. `src/pages/Contribute.tsx` -- novos passos e campos
-3. `src/components/admin/AddContributorDialog.tsx` -- novos campos
-4. `src/pages/Admin.tsx` -- colunas e badges adicionais
-5. `src/components/admin/ContributorsFilters.tsx` -- filtros novos
-6. `src/components/admin/PartAssignmentSelect.tsx` -- badges e avisos
-7. `src/pages/Portal.tsx` -- mostrar/editar novos campos no portal do voluntario
+1. **`src/pages/Donate.tsx`** -- Pagina de donativos com:
+   - Secao hero emocional explicando o impacto
+   - Cards com metodos de pagamento (MBWay, IBAN, PayPal)
+   - Formulario opcional para registar donativo (nome, email, valor, metodo)
+   - Design consistente com o resto da app
 
+2. **`src/pages/Request.tsx`** -- Formulario de inscricao de beneficiarios com:
+   - Formulario multi-step (3-4 passos) seguindo o padrao do `/contribute`
+   - Passo 1: Dados de contacto (nome, email, telefone)
+   - Passo 2: Localizacao (regiao)
+   - Passo 3: Detalhes da necessidade (tipo, idade, descricao)
+   - Passo 4: Submissao
+   - Mensagem de confirmacao apos submissao
+
+### Alteracoes a Ficheiros Existentes
+
+1. **`src/App.tsx`** -- Adicionar rotas `/donate` e `/request`
+2. **`src/components/Navbar.tsx`** -- Adicionar links "Doar" e "Pedir Ajuda" na navegacao
+3. **`src/components/CTASection.tsx`** -- Adicionar botoes secundarios para donativos e pedidos de ajuda
+4. **`src/components/HeroSection.tsx`** -- Adicionar stat de donativos ou pedidos (opcional)
+5. **`src/pages/Admin.tsx`** -- Adicionar tab/seccao para gerir pedidos de beneficiarios e ver donativos
+
+### Ficheiros Novos
+
+1. `supabase/migrations/` -- Migracao com 2 tabelas novas + RLS
+2. `src/pages/Donate.tsx`
+3. `src/pages/Request.tsx`
