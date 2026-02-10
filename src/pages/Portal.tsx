@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Printer, MapPin, Calendar, Package, Mail, Pencil, X, Check, Loader2, AlertCircle } from "lucide-react";
+import { Printer, MapPin, Calendar, Package, Mail, Pencil, X, Check, Loader2, AlertCircle, Star, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
@@ -111,11 +111,19 @@ const Portal = () => {
     );
   }
 
+  const experienceLabels: Record<string, string> = {
+    beginner: "🔰 Iniciante",
+    intermediate: "Intermédio",
+    expert: "⭐ Experiente",
+  };
+
   const fields = [
     { key: "name", label: "Nome", icon: Mail, value: contributor.name },
     { key: "location", label: "Localização", icon: MapPin, value: contributor.location },
     { key: "printer_model", label: "Impressora", icon: Printer, value: contributor.printer_model },
+    { key: "experience_level", label: "Experiência", icon: Star, value: experienceLabels[(contributor as any).experience_level] || "Intermédio", editable: false },
     { key: "availability", label: "Disponibilidade", icon: Calendar, value: contributor.availability },
+    { key: "turnaround_time", label: "Tempo de entrega", icon: Clock, value: (contributor as any).turnaround_time || "Não definido" },
     { key: "shipping_carrier", label: "Envio", icon: Package, value: contributor.can_ship ? (contributor.shipping_carrier || "Qualquer transportadora") : "Não envia" },
   ];
 
@@ -141,6 +149,16 @@ const Portal = () => {
 
             <div className="bg-card rounded-2xl border border-border p-6 shadow-sm mb-6">
               <h2 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Os Seus Dados</h2>
+              <div className="flex gap-2 mb-4 flex-wrap">
+                {(contributor as any).build_volume_ok ? (
+                  <Badge className="bg-accent/10 text-accent">✓ Volume ≥ 256mm</Badge>
+                ) : (
+                  <Badge className="bg-destructive/10 text-destructive">⚠ Volume não confirmado</Badge>
+                )}
+                {(contributor as any).willing_to_collaborate && (
+                  <Badge className="bg-accent/10 text-accent">🤝 Disponível para colaborar</Badge>
+                )}
+              </div>
               <div className="space-y-3">
                 {fields.map((field) => (
                   <div key={field.key} className="flex items-center justify-between py-3 border-b border-border last:border-0">
@@ -159,7 +177,7 @@ const Portal = () => {
                         )}
                       </div>
                     </div>
-                    {editingField !== field.key && field.key !== "shipping_carrier" && (
+                    {editingField !== field.key && field.key !== "shipping_carrier" && (field as any).editable !== false && (
                       <button onClick={() => startEdit(field.key, field.value)} className="text-muted-foreground hover:text-accent transition-colors">
                         <Pencil className="w-3.5 h-3.5" />
                       </button>

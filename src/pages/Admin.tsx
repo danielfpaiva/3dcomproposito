@@ -30,6 +30,8 @@ const Admin = () => {
   const [filterRegion, setFilterRegion] = useState("all");
   const [filterPrinter, setFilterPrinter] = useState("all");
   const [filterMaterial, setFilterMaterial] = useState("all");
+  const [filterExperience, setFilterExperience] = useState("all");
+  const [filterBuildVolume, setFilterBuildVolume] = useState("all");
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -82,9 +84,12 @@ const Admin = () => {
       if (filterRegion !== "all" && c.region !== filterRegion) return false;
       if (filterPrinter !== "all" && c.printer_model !== filterPrinter) return false;
       if (filterMaterial !== "all" && !(c as any).materials?.includes(filterMaterial)) return false;
+      if (filterExperience !== "all" && (c as any).experience_level !== filterExperience) return false;
+      if (filterBuildVolume === "ok" && !(c as any).build_volume_ok) return false;
+      if (filterBuildVolume === "not_ok" && (c as any).build_volume_ok) return false;
       return true;
     });
-  }, [contributors, filterSearch, filterRegion, filterPrinter, filterMaterial]);
+  }, [contributors, filterSearch, filterRegion, filterPrinter, filterMaterial, filterExperience, filterBuildVolume]);
 
   const [newProjectName, setNewProjectName] = useState("");
   const [creatingProject, setCreatingProject] = useState(false);
@@ -274,6 +279,10 @@ const Admin = () => {
                   printerModels={printerModels}
                   material={filterMaterial}
                   onMaterialChange={setFilterMaterial}
+                  experience={filterExperience}
+                  onExperienceChange={setFilterExperience}
+                  buildVolume={filterBuildVolume}
+                  onBuildVolumeChange={setFilterBuildVolume}
                 />
                 <AddContributorDialog />
               </div>
@@ -286,7 +295,8 @@ const Admin = () => {
                         <th className="text-left p-4 font-semibold text-foreground">Localização</th>
                         <th className="text-left p-4 font-semibold text-foreground hidden sm:table-cell">Impressora</th>
                         <th className="text-left p-4 font-semibold text-foreground hidden sm:table-cell">Materiais</th>
-                        <th className="text-left p-4 font-semibold text-foreground hidden md:table-cell">Telefone</th>
+                        <th className="text-left p-4 font-semibold text-foreground hidden md:table-cell">Experiência</th>
+                        <th className="text-left p-4 font-semibold text-foreground hidden md:table-cell">Turnaround</th>
                         <th className="text-left p-4 font-semibold text-foreground hidden lg:table-cell">Envia</th>
                         <th className="text-left p-4 font-semibold text-foreground">Região</th>
                       </tr>
@@ -305,14 +315,19 @@ const Admin = () => {
                         return sortedRegions.map((region) => (
                           <>
                             <tr key={`header-${region}`} className="bg-muted/50">
-                              <td colSpan={7} className="p-3 text-xs font-bold text-foreground uppercase tracking-wider">
+                              <td colSpan={8} className="p-3 text-xs font-bold text-foreground uppercase tracking-wider">
                                 {regionNames[region] ?? region} ({grouped[region].length})
                               </td>
                             </tr>
                             {grouped[region].map((c) => (
                               <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
                                 <td className="p-4">
-                                  <p className="font-medium text-foreground">{c.name}</p>
+                                  <div className="flex items-center gap-1.5">
+                                    <p className="font-medium text-foreground">{c.name}</p>
+                                    {!(c as any).build_volume_ok && (
+                                      <span title="Volume de impressão não confirmado" className="text-destructive text-xs">⚠️</span>
+                                    )}
+                                  </div>
                                   <p className="text-xs text-muted-foreground">{c.email}</p>
                                 </td>
                                 <td className="p-4 text-muted-foreground">{c.location}</td>
@@ -324,7 +339,12 @@ const Admin = () => {
                                     ))}
                                   </div>
                                 </td>
-                                <td className="p-4 text-muted-foreground hidden md:table-cell">{(c as any).phone || "—"}</td>
+                                <td className="p-4 hidden md:table-cell">
+                                  <Badge variant="secondary" className="text-xs">
+                                    {(c as any).experience_level === "expert" ? "⭐ Experiente" : (c as any).experience_level === "beginner" ? "🔰 Iniciante" : "Intermédio"}
+                                  </Badge>
+                                </td>
+                                <td className="p-4 text-muted-foreground text-xs hidden md:table-cell">{(c as any).turnaround_time || "—"}</td>
                                 <td className="p-4 hidden lg:table-cell">
                                   {c.can_ship ? <Badge className="bg-accent/10 text-accent">Sim</Badge> : <span className="text-muted-foreground">Não</span>}
                                 </td>

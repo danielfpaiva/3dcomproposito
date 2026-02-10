@@ -17,9 +17,11 @@ export type Database = {
       contributors: {
         Row: {
           availability: string
+          build_volume_ok: boolean
           can_ship: boolean
           created_at: string
           email: string
+          experience_level: string
           id: string
           location: string
           materials: string[]
@@ -29,13 +31,17 @@ export type Database = {
           region: string
           shipping_carrier: string | null
           token: string
+          turnaround_time: string | null
           updated_at: string
+          willing_to_collaborate: boolean
         }
         Insert: {
           availability: string
+          build_volume_ok?: boolean
           can_ship?: boolean
           created_at?: string
           email: string
+          experience_level?: string
           id?: string
           location: string
           materials?: string[]
@@ -45,13 +51,17 @@ export type Database = {
           region?: string
           shipping_carrier?: string | null
           token?: string
+          turnaround_time?: string | null
           updated_at?: string
+          willing_to_collaborate?: boolean
         }
         Update: {
           availability?: string
+          build_volume_ok?: boolean
           can_ship?: boolean
           created_at?: string
           email?: string
+          experience_level?: string
           id?: string
           location?: string
           materials?: string[]
@@ -61,7 +71,9 @@ export type Database = {
           region?: string
           shipping_carrier?: string | null
           token?: string
+          turnaround_time?: string | null
           updated_at?: string
+          willing_to_collaborate?: boolean
         }
         Relationships: []
       }

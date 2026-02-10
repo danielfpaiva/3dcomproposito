@@ -14,6 +14,8 @@ interface Contributor {
   printer_model: string;
   region?: string;
   materials?: string[];
+  experience_level?: string;
+  build_volume_ok?: boolean;
 }
 
 interface PartAssignmentSelectProps {
@@ -63,11 +65,15 @@ const PartAssignmentSelect = ({ value, contributors, onAssign, disabled }: PartA
             <SelectLabel className="text-xs font-bold text-muted-foreground uppercase">
               {regionLabels[region] ?? region}
             </SelectLabel>
-            {grouped[region].map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name} · {c.printer_model} {c.materials?.length ? `· ${c.materials.join("/")}` : ""}
-              </SelectItem>
-            ))}
+            {grouped[region].map((c) => {
+              const expLabel = c.experience_level === "expert" ? "⭐" : c.experience_level === "beginner" ? "🔰" : "";
+              const volWarn = c.build_volume_ok === false ? " ⚠️" : "";
+              return (
+                <SelectItem key={c.id} value={c.id}>
+                  {expLabel}{c.name} · {c.printer_model} {c.materials?.length ? `· ${c.materials.join("/")}` : ""}{volWarn}
+                </SelectItem>
+              );
+            })}
           </SelectGroup>
         ))}
       </SelectContent>

@@ -19,6 +19,10 @@ interface ContributorsFiltersProps {
   printerModels: string[];
   material: string;
   onMaterialChange: (v: string) => void;
+  experience: string;
+  onExperienceChange: (v: string) => void;
+  buildVolume: string;
+  onBuildVolumeChange: (v: string) => void;
 }
 
 const ContributorsFilters = ({
@@ -27,10 +31,12 @@ const ContributorsFilters = ({
   printer, onPrinterChange,
   printerModels,
   material, onMaterialChange,
+  experience, onExperienceChange,
+  buildVolume, onBuildVolumeChange,
 }: ContributorsFiltersProps) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-3">
-      <div className="relative flex-1">
+    <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+      <div className="relative flex-1 min-w-[180px]">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           placeholder="Pesquisar por nome..."
@@ -69,6 +75,27 @@ const ContributorsFilters = ({
           <SelectItem value="all">Todos materiais</SelectItem>
           <SelectItem value="PETG">PETG</SelectItem>
           <SelectItem value="TPU">TPU</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select value={experience} onValueChange={onExperienceChange}>
+        <SelectTrigger className="w-full sm:w-[150px]">
+          <SelectValue placeholder="Experiência" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Toda experiência</SelectItem>
+          <SelectItem value="beginner">Iniciante</SelectItem>
+          <SelectItem value="intermediate">Intermédio</SelectItem>
+          <SelectItem value="expert">Experiente</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select value={buildVolume} onValueChange={onBuildVolumeChange}>
+        <SelectTrigger className="w-full sm:w-[150px]">
+          <SelectValue placeholder="Volume" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Qualquer volume</SelectItem>
+          <SelectItem value="ok">≥ 256mm ✓</SelectItem>
+          <SelectItem value="not_ok">Não confirmado</SelectItem>
         </SelectContent>
       </Select>
     </div>
