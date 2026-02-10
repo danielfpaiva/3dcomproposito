@@ -17,6 +17,8 @@ interface ContributorsFiltersProps {
   printer: string;
   onPrinterChange: (v: string) => void;
   printerModels: string[];
+  material: string;
+  onMaterialChange: (v: string) => void;
 }
 
 const ContributorsFilters = ({
@@ -24,6 +26,7 @@ const ContributorsFilters = ({
   region, onRegionChange,
   printer, onPrinterChange,
   printerModels,
+  material, onMaterialChange,
 }: ContributorsFiltersProps) => {
   return (
     <div className="flex flex-col sm:flex-row gap-3">
@@ -56,6 +59,16 @@ const ContributorsFilters = ({
           {printerModels.map((m) => (
             <SelectItem key={m} value={m}>{m}</SelectItem>
           ))}
+        </SelectContent>
+      </Select>
+      <Select value={material} onValueChange={onMaterialChange}>
+        <SelectTrigger className="w-full sm:w-[140px]">
+          <SelectValue placeholder="Material" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todos materiais</SelectItem>
+          <SelectItem value="PETG">PETG</SelectItem>
+          <SelectItem value="TPU">TPU</SelectItem>
         </SelectContent>
       </Select>
     </div>

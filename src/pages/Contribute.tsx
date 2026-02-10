@@ -19,9 +19,10 @@ const steps = [
   { id: 1, label: "Nome", icon: User },
   { id: 2, label: "Localização", icon: MapPin },
   { id: 3, label: "Impressora", icon: Printer },
-  { id: 4, label: "Disponibilidade", icon: Calendar },
-  { id: 5, label: "Envio", icon: Package },
-  { id: 6, label: "Ativar", icon: Mail },
+  { id: 4, label: "Materiais", icon: Package },
+  { id: 5, label: "Disponibilidade", icon: Calendar },
+  { id: 6, label: "Envio", icon: Package },
+  { id: 7, label: "Ativar", icon: Mail },
 ];
 
 const printerModels = [
@@ -64,8 +65,8 @@ const availabilityOptions = [
 const Contribute = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    name: "", location: "", region: "centro", printer: "", availability: "",
-    canShip: false, shippingCarrier: "", email: "",
+    name: "", location: "", region: "centro", printer: "", materials: [] as string[],
+    availability: "", canShip: false, shippingCarrier: "", email: "", phone: "",
   });
   const [submitted, setSubmitted] = useState(false);
   const [portalLink, setPortalLink] = useState("");
@@ -82,15 +83,16 @@ const Contribute = () => {
       case 1: return formData.name.trim().length > 0;
       case 2: return formData.location.trim().length > 0 && formData.region.length > 0;
       case 3: return formData.printer.length > 0;
-      case 4: return formData.availability.length > 0;
-      case 5: return true;
-      case 6: return formData.email.includes("@");
+      case 4: return formData.materials.length > 0;
+      case 5: return formData.availability.length > 0;
+      case 6: return true;
+      case 7: return formData.email.includes("@");
       default: return false;
     }
   };
 
   const handleNext = async () => {
-    if (currentStep < 6) {
+    if (currentStep < 7) {
       setCurrentStep((prev) => prev + 1);
       return;
     }
@@ -102,10 +104,12 @@ const Contribute = () => {
       location: formData.location.trim(),
       region: formData.region,
       printer_model: formData.printer,
+      materials: formData.materials,
       availability: formData.availability,
       can_ship: formData.canShip,
       shipping_carrier: formData.canShip ? formData.shippingCarrier : null,
-    }).select("token").single();
+      phone: formData.phone.trim() || null,
+    } as any).select("token").single();
 
     if (error) {
       toast({ title: "Erro ao submeter", description: error.message, variant: "destructive" });
@@ -232,6 +236,28 @@ const Contribute = () => {
                 {currentStep === 4 && (
                   <div className="space-y-4">
                     <div>
+                      <Label className="text-base font-bold text-foreground">Que materiais imprime?</Label>
+                      <p className="text-sm text-muted-foreground mt-1 mb-3">Selecione os materiais que a sua impressora suporta.</p>
+                    </div>
+                    <div className="space-y-2">
+                      {["PETG", "TPU"].map((mat) => (
+                        <button key={mat} onClick={() => {
+                          setFormData((prev) => {
+                            const has = prev.materials.includes(mat);
+                            return { ...prev, materials: has ? prev.materials.filter((m) => m !== mat) : [...prev.materials, mat] };
+                          });
+                        }}
+                          className={`w-full text-left px-4 py-3 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                            formData.materials.includes(mat) ? "bg-accent/10 border-accent/30 text-accent" : "bg-background border-border text-foreground hover:border-accent/20"
+                          }`}>{mat}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {currentStep === 5 && (
+                  <div className="space-y-4">
+                    <div>
                       <Label className="text-base font-bold text-foreground">Quando está disponível para imprimir?</Label>
                       <p className="text-sm text-muted-foreground mt-1 mb-3">Disponibilidade aproximada para planearmos os prazos.</p>
                     </div>
@@ -246,7 +272,7 @@ const Contribute = () => {
                   </div>
                 )}
 
-                {currentStep === 5 && (
+                {currentStep === 6 && (
                   <div className="space-y-5">
                     <div>
                       <Label className="text-base font-bold text-foreground">Pode enviar peças impressas?</Label>
@@ -266,13 +292,14 @@ const Contribute = () => {
                   </div>
                 )}
 
-                {currentStep === 6 && (
+                {currentStep === 7 && (
                   <div className="space-y-4">
                     <div>
                       <Label className="text-base font-bold text-foreground">Ative a sua contribuição</Label>
                       <p className="text-sm text-muted-foreground mt-1 mb-3">Introduza o seu email para receber o seu link único de voluntário e atribuições de projetos.</p>
                     </div>
                     <Input type="email" placeholder="o.seu.email@exemplo.com" value={formData.email} onChange={(e) => updateField("email", e.target.value)} className="text-base py-5" autoFocus />
+                    <Input type="tel" placeholder="Telefone (opcional)" value={formData.phone} onChange={(e) => updateField("phone", e.target.value)} className="text-base py-5" />
                   </div>
                 )}
               </motion.div>
@@ -284,9 +311,9 @@ const Contribute = () => {
               </Button>
               <div className="text-xs text-muted-foreground">{currentStep} de {steps.length}</div>
               <Button onClick={handleNext} disabled={!canProceed() || submitting} className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : currentStep === 6 ? "Ativar" : "Seguinte"}
-                {!submitting && currentStep < 6 && <ArrowRight className="w-4 h-4 ml-1" />}
-                {!submitting && currentStep === 6 && <Check className="w-4 h-4 ml-1" />}
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : currentStep === 7 ? "Ativar" : "Seguinte"}
+                {!submitting && currentStep < 7 && <ArrowRight className="w-4 h-4 ml-1" />}
+                {!submitting && currentStep === 7 && <Check className="w-4 h-4 ml-1" />}
               </Button>
             </div>
           </div>

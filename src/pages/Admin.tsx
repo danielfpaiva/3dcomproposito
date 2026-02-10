@@ -29,6 +29,7 @@ const Admin = () => {
   const [filterSearch, setFilterSearch] = useState("");
   const [filterRegion, setFilterRegion] = useState("all");
   const [filterPrinter, setFilterPrinter] = useState("all");
+  const [filterMaterial, setFilterMaterial] = useState("all");
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -80,9 +81,10 @@ const Admin = () => {
       if (filterSearch && !c.name.toLowerCase().includes(filterSearch.toLowerCase())) return false;
       if (filterRegion !== "all" && c.region !== filterRegion) return false;
       if (filterPrinter !== "all" && c.printer_model !== filterPrinter) return false;
+      if (filterMaterial !== "all" && !(c as any).materials?.includes(filterMaterial)) return false;
       return true;
     });
-  }, [contributors, filterSearch, filterRegion, filterPrinter]);
+  }, [contributors, filterSearch, filterRegion, filterPrinter, filterMaterial]);
 
   const [newProjectName, setNewProjectName] = useState("");
   const [creatingProject, setCreatingProject] = useState(false);
@@ -270,38 +272,68 @@ const Admin = () => {
                   printer={filterPrinter}
                   onPrinterChange={setFilterPrinter}
                   printerModels={printerModels}
+                  material={filterMaterial}
+                  onMaterialChange={setFilterMaterial}
                 />
                 <AddContributorDialog />
               </div>
               <div className="bg-card rounded-2xl border border-border overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead>
+                     <thead>
                       <tr className="border-b border-border bg-muted/30">
                         <th className="text-left p-4 font-semibold text-foreground">Nome</th>
                         <th className="text-left p-4 font-semibold text-foreground">Localização</th>
                         <th className="text-left p-4 font-semibold text-foreground hidden sm:table-cell">Impressora</th>
-                        <th className="text-left p-4 font-semibold text-foreground hidden md:table-cell">Disponibilidade</th>
+                        <th className="text-left p-4 font-semibold text-foreground hidden sm:table-cell">Materiais</th>
+                        <th className="text-left p-4 font-semibold text-foreground hidden md:table-cell">Telefone</th>
                         <th className="text-left p-4 font-semibold text-foreground hidden lg:table-cell">Envia</th>
                         <th className="text-left p-4 font-semibold text-foreground">Região</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredContributors.map((c) => (
-                        <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                          <td className="p-4">
-                            <p className="font-medium text-foreground">{c.name}</p>
-                            <p className="text-xs text-muted-foreground">{c.email}</p>
-                          </td>
-                          <td className="p-4 text-muted-foreground">{c.location}</td>
-                          <td className="p-4 text-muted-foreground hidden sm:table-cell">{c.printer_model}</td>
-                          <td className="p-4 text-muted-foreground hidden md:table-cell">{c.availability}</td>
-                          <td className="p-4 hidden lg:table-cell">
-                            {c.can_ship ? <Badge className="bg-accent/10 text-accent">Sim</Badge> : <span className="text-muted-foreground">Não</span>}
-                          </td>
-                          <td className="p-4"><Badge variant="secondary">{c.region}</Badge></td>
-                        </tr>
-                      ))}
+                      {(() => {
+                        const regionOrder = ["norte", "centro", "lisboa", "alentejo", "algarve", "acores", "madeira"];
+                        const regionNames: Record<string, string> = { norte: "Norte", centro: "Centro", lisboa: "Lisboa", alentejo: "Alentejo", algarve: "Algarve", acores: "Açores", madeira: "Madeira" };
+                        const grouped = filteredContributors.reduce<Record<string, typeof filteredContributors>>((acc, c) => {
+                          const r = c.region || "outro";
+                          if (!acc[r]) acc[r] = [];
+                          acc[r].push(c);
+                          return acc;
+                        }, {});
+                        const sortedRegions = Object.keys(grouped).sort((a, b) => (regionOrder.indexOf(a) === -1 ? 99 : regionOrder.indexOf(a)) - (regionOrder.indexOf(b) === -1 ? 99 : regionOrder.indexOf(b)));
+                        return sortedRegions.map((region) => (
+                          <>
+                            <tr key={`header-${region}`} className="bg-muted/50">
+                              <td colSpan={7} className="p-3 text-xs font-bold text-foreground uppercase tracking-wider">
+                                {regionNames[region] ?? region} ({grouped[region].length})
+                              </td>
+                            </tr>
+                            {grouped[region].map((c) => (
+                              <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                                <td className="p-4">
+                                  <p className="font-medium text-foreground">{c.name}</p>
+                                  <p className="text-xs text-muted-foreground">{c.email}</p>
+                                </td>
+                                <td className="p-4 text-muted-foreground">{c.location}</td>
+                                <td className="p-4 text-muted-foreground hidden sm:table-cell">{c.printer_model}</td>
+                                <td className="p-4 hidden sm:table-cell">
+                                  <div className="flex gap-1">
+                                    {((c as any).materials ?? ["PETG"]).map((m: string) => (
+                                      <Badge key={m} className={m === "TPU" ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" : "bg-accent/10 text-accent"}>{m}</Badge>
+                                    ))}
+                                  </div>
+                                </td>
+                                <td className="p-4 text-muted-foreground hidden md:table-cell">{(c as any).phone || "—"}</td>
+                                <td className="p-4 hidden lg:table-cell">
+                                  {c.can_ship ? <Badge className="bg-accent/10 text-accent">Sim</Badge> : <span className="text-muted-foreground">Não</span>}
+                                </td>
+                                <td className="p-4"><Badge variant="secondary">{c.region}</Badge></td>
+                              </tr>
+                            ))}
+                          </>
+                        ));
+                      })()}
                     </tbody>
                   </table>
                   {filteredContributors.length === 0 && (

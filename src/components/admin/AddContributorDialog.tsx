@@ -68,10 +68,12 @@ const AddContributorDialog = () => {
     printer_model: "",
     availability: "Disponível",
     can_ship: false,
+    phone: "",
+    materials: ["PETG"] as string[],
   });
 
   const resetForm = () =>
-    setForm({ name: "", email: "", location: "", region: "centro", printer_model: "", availability: "Disponível", can_ship: false });
+    setForm({ name: "", email: "", location: "", region: "centro", printer_model: "", availability: "Disponível", can_ship: false, phone: "", materials: ["PETG"] });
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.email.trim() || !form.location.trim() || !form.printer_model) {
@@ -87,7 +89,9 @@ const AddContributorDialog = () => {
       printer_model: form.printer_model,
       availability: form.availability,
       can_ship: form.can_ship,
-    });
+      phone: form.phone.trim() || null,
+      materials: form.materials,
+    } as any);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
@@ -148,6 +152,24 @@ const AddContributorDialog = () => {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="phone">Telefone</Label>
+            <Input id="phone" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="Opcional" />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Materiais</Label>
+            <div className="flex gap-2">
+              {["PETG", "TPU"].map((mat) => (
+                <button key={mat} onClick={() => {
+                  const has = form.materials.includes(mat);
+                  setForm({ ...form, materials: has ? form.materials.filter((m) => m !== mat) : [...form.materials, mat] });
+                }}
+                  className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+                    form.materials.includes(mat) ? "bg-accent/10 border-accent/30 text-accent" : "border-border text-foreground hover:border-accent/20"
+                  }`}>{mat}</button>
+              ))}
+            </div>
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="availability">Disponibilidade</Label>

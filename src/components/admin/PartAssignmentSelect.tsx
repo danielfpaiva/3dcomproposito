@@ -13,6 +13,7 @@ interface Contributor {
   name: string;
   printer_model: string;
   region?: string;
+  materials?: string[];
 }
 
 interface PartAssignmentSelectProps {
@@ -64,7 +65,7 @@ const PartAssignmentSelect = ({ value, contributors, onAssign, disabled }: PartA
             </SelectLabel>
             {grouped[region].map((c) => (
               <SelectItem key={c.id} value={c.id}>
-                {c.name} · {c.printer_model}
+                {c.name} · {c.printer_model} {c.materials?.length ? `· ${c.materials.join("/")}` : ""}
               </SelectItem>
             ))}
           </SelectGroup>

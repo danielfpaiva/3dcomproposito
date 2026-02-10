@@ -22,7 +22,9 @@ export type Database = {
           email: string
           id: string
           location: string
+          materials: string[]
           name: string
+          phone: string | null
           printer_model: string
           region: string
           shipping_carrier: string | null
@@ -36,7 +38,9 @@ export type Database = {
           email: string
           id?: string
           location: string
+          materials?: string[]
           name: string
+          phone?: string | null
           printer_model: string
           region?: string
           shipping_carrier?: string | null
@@ -50,7 +54,9 @@ export type Database = {
           email?: string
           id?: string
           location?: string
+          materials?: string[]
           name?: string
+          phone?: string | null
           printer_model?: string
           region?: string
           shipping_carrier?: string | null
