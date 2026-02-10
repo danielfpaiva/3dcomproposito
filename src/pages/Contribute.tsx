@@ -5,15 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { ArrowLeft, ArrowRight, Check, User, MapPin, Printer, Calendar, Mail, Package } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, User, MapPin, Printer, Calendar, Mail, Package, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { PORTUGAL_REGIONS } from "@/lib/regions";
+import { useQueryClient } from "@tanstack/react-query";
 
 const steps = [
   { id: 1, label: "Your Name", icon: User },
@@ -25,37 +25,26 @@ const steps = [
 ];
 
 const printerModels = [
-  "Prusa i3 MK3S+",
-  "Prusa MINI+",
-  "Creality Ender 3 V2",
-  "Creality CR-10",
-  "Bambu Lab X1 Carbon",
-  "Bambu Lab P1S",
-  "Anycubic Kobra 2",
-  "Voron 2.4",
-  "Other",
+  "Prusa i3 MK3S+", "Prusa MINI+", "Creality Ender 3 V2", "Creality CR-10",
+  "Bambu Lab X1 Carbon", "Bambu Lab P1S", "Anycubic Kobra 2", "Voron 2.4", "Other",
 ];
 
 const availabilityOptions = [
-  "Weekdays (9am–5pm)",
-  "Evenings (5pm–10pm)",
-  "Weekends only",
-  "Flexible / Anytime",
-  "Limited (a few hours/week)",
+  "Weekdays (9am–5pm)", "Evenings (5pm–10pm)", "Weekends only",
+  "Flexible / Anytime", "Limited (a few hours/week)",
 ];
 
 const Contribute = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    name: "",
-    location: "",
-    printer: "",
-    availability: "",
-    canShip: false,
-    shippingCarrier: "",
-    email: "",
+    name: "", location: "", region: "centro", printer: "", availability: "",
+    canShip: false, shippingCarrier: "", email: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [portalLink, setPortalLink] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const updateField = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -64,7 +53,7 @@ const Contribute = () => {
   const canProceed = () => {
     switch (currentStep) {
       case 1: return formData.name.trim().length > 0;
-      case 2: return formData.location.trim().length > 0;
+      case 2: return formData.location.trim().length > 0 && formData.region.length > 0;
       case 3: return formData.printer.length > 0;
       case 4: return formData.availability.length > 0;
       case 5: return true;
@@ -73,12 +62,36 @@ const Contribute = () => {
     }
   };
 
-  const handleNext = () => {
-    if (currentStep === 6) {
-      setSubmitted(true);
+  const handleNext = async () => {
+    if (currentStep < 6) {
+      setCurrentStep((prev) => prev + 1);
       return;
     }
-    setCurrentStep((prev) => Math.min(prev + 1, 6));
+
+    // Submit to database
+    setSubmitting(true);
+    const { data, error } = await supabase.from("contributors").insert({
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      location: formData.location.trim(),
+      region: formData.region,
+      printer_model: formData.printer,
+      availability: formData.availability,
+      can_ship: formData.canShip,
+      shipping_carrier: formData.canShip ? formData.shippingCarrier : null,
+    }).select("token").single();
+
+    if (error) {
+      toast({ title: "Submission failed", description: error.message, variant: "destructive" });
+      setSubmitting(false);
+      return;
+    }
+
+    setPortalLink(`${window.location.origin}/portal?token=${data.token}`);
+    queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["regional-stats"] });
+    setSubmitted(true);
+    setSubmitting(false);
   };
 
   const handleBack = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
@@ -94,43 +107,22 @@ const Contribute = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="pt-32 pb-20 px-6 flex items-center justify-center min-h-[80vh]">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className="text-center max-w-md"
-          >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.4, delay: 0.2, type: "spring", stiffness: 200 }}
-              className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6"
-            >
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }} className="text-center max-w-md">
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ duration: 0.4, delay: 0.2, type: "spring", stiffness: 200 }} className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6">
               <Check className="w-10 h-10 text-accent" />
             </motion.div>
-            <h1 className="text-3xl font-black text-foreground mb-3">
-              Mission Accomplished!
-            </h1>
-            <p className="text-muted-foreground mb-2">
-              Welcome aboard, <span className="font-semibold text-foreground">{formData.name}</span>.
-            </p>
-            <p className="text-muted-foreground text-sm mb-8">
-              Check <span className="font-medium text-foreground">{formData.email}</span> for your unique contributor link and project assignment details.
-            </p>
-            <div className="bg-card border border-border rounded-xl p-6 text-left space-y-3">
-              <h3 className="text-sm font-bold text-foreground mb-3">Your Contribution Summary</h3>
-              {[
-                { label: "Location", value: formData.location },
-                { label: "Printer", value: formData.printer },
-                { label: "Availability", value: formData.availability },
-                { label: "Can Ship Parts", value: formData.canShip ? `Yes — ${formData.shippingCarrier || "Any carrier"}` : "No" },
-              ].map((item) => (
-                <div key={item.label} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{item.label}</span>
-                  <span className="font-medium text-foreground">{item.value}</span>
-                </div>
-              ))}
+            <h1 className="text-3xl font-black text-foreground mb-3">Mission Accomplished!</h1>
+            <p className="text-muted-foreground mb-2">Welcome aboard, <span className="font-semibold text-foreground">{formData.name}</span>.</p>
+            <p className="text-muted-foreground text-sm mb-6">Bookmark your portal link to manage your contribution and see assignments:</p>
+            <div className="bg-card border border-border rounded-xl p-4 mb-6">
+              <p className="text-xs text-muted-foreground mb-1">Your Portal Link</p>
+              <p className="text-sm font-mono text-accent break-all">{portalLink}</p>
             </div>
+            <a href={portalLink}>
+              <Button className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
+                Go to My Portal
+              </Button>
+            </a>
           </motion.div>
         </div>
         <Footer />
@@ -143,62 +135,33 @@ const Contribute = () => {
       <Navbar />
       <div className="pt-28 pb-20 px-6">
         <div className="max-w-lg mx-auto">
-          {/* Header */}
           <div className="text-center mb-10">
             <h1 className="text-3xl font-black text-foreground mb-2">Join the Mission</h1>
-            <p className="text-muted-foreground">
-              Tell us about your setup — takes under 2 minutes
-            </p>
+            <p className="text-muted-foreground">Tell us about your setup — takes under 2 minutes</p>
           </div>
 
-          {/* Step indicators */}
           <div className="flex items-center justify-center gap-2 mb-10">
             {steps.map((step) => (
-              <div
-                key={step.id}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
-                  step.id === currentStep
-                    ? "bg-accent/10 text-accent border border-accent/20"
-                    : step.id < currentStep
-                    ? "bg-accent/5 text-accent/60"
-                    : "text-muted-foreground/40"
-                }`}
-              >
-                {step.id < currentStep ? (
-                  <Check className="w-3 h-3" />
-                ) : (
-                  <step.icon className="w-3 h-3" />
-                )}
+              <div key={step.id} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
+                step.id === currentStep ? "bg-accent/10 text-accent border border-accent/20"
+                : step.id < currentStep ? "bg-accent/5 text-accent/60" : "text-muted-foreground/40"
+              }`}>
+                {step.id < currentStep ? <Check className="w-3 h-3" /> : <step.icon className="w-3 h-3" />}
                 <span className="hidden sm:inline">{step.label}</span>
               </div>
             ))}
           </div>
 
-          {/* Form card */}
           <div className="bg-card rounded-2xl border border-border p-8 shadow-sm min-h-[280px] flex flex-col">
             <AnimatePresence mode="wait">
-              <motion.div
-                key={currentStep}
-                variants={slideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="flex-1"
-              >
+              <motion.div key={currentStep} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="flex-1">
                 {currentStep === 1 && (
                   <div className="space-y-4">
                     <div>
                       <Label className="text-base font-bold text-foreground">What's your name?</Label>
                       <p className="text-sm text-muted-foreground mt-1 mb-3">So we know who's making the magic happen.</p>
                     </div>
-                    <Input
-                      placeholder="e.g., Sarah Johnson"
-                      value={formData.name}
-                      onChange={(e) => updateField("name", e.target.value)}
-                      className="text-base py-5"
-                      autoFocus
-                    />
+                    <Input placeholder="e.g., João Silva" value={formData.name} onChange={(e) => updateField("name", e.target.value)} className="text-base py-5" autoFocus />
                   </div>
                 )}
 
@@ -206,15 +169,20 @@ const Contribute = () => {
                   <div className="space-y-4">
                     <div>
                       <Label className="text-base font-bold text-foreground">Where are you located?</Label>
-                      <p className="text-sm text-muted-foreground mt-1 mb-3">City or zip code — helps us match you with nearby projects.</p>
+                      <p className="text-sm text-muted-foreground mt-1 mb-3">City or postal code — helps us match you with nearby projects.</p>
                     </div>
-                    <Input
-                      placeholder="e.g., Portland, OR or 97201"
-                      value={formData.location}
-                      onChange={(e) => updateField("location", e.target.value)}
-                      className="text-base py-5"
-                      autoFocus
-                    />
+                    <Input placeholder="e.g., Porto or 4000-001" value={formData.location} onChange={(e) => updateField("location", e.target.value)} className="text-base py-5" autoFocus />
+                    <div>
+                      <Label className="text-sm font-medium text-foreground">Region</Label>
+                      <Select value={formData.region} onValueChange={(v) => updateField("region", v)}>
+                        <SelectTrigger className="mt-1"><SelectValue placeholder="Select region" /></SelectTrigger>
+                        <SelectContent>
+                          {PORTUGAL_REGIONS.map((r) => (
+                            <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 )}
 
@@ -225,9 +193,7 @@ const Contribute = () => {
                       <p className="text-sm text-muted-foreground mt-1 mb-3">This helps us determine which parts you can print.</p>
                     </div>
                     <Select value={formData.printer} onValueChange={(v) => updateField("printer", v)}>
-                      <SelectTrigger className="text-base py-5">
-                        <SelectValue placeholder="Select your printer model" />
-                      </SelectTrigger>
+                      <SelectTrigger className="text-base py-5"><SelectValue placeholder="Select your printer model" /></SelectTrigger>
                       <SelectContent>
                         {printerModels.map((model) => (
                           <SelectItem key={model} value={model}>{model}</SelectItem>
@@ -245,17 +211,10 @@ const Contribute = () => {
                     </div>
                     <div className="space-y-2">
                       {availabilityOptions.map((opt) => (
-                        <button
-                          key={opt}
-                          onClick={() => updateField("availability", opt)}
+                        <button key={opt} onClick={() => updateField("availability", opt)}
                           className={`w-full text-left px-4 py-3 rounded-xl border text-sm font-medium transition-all duration-200 ${
-                            formData.availability === opt
-                              ? "bg-accent/10 border-accent/30 text-accent"
-                              : "bg-background border-border text-foreground hover:border-accent/20"
-                          }`}
-                        >
-                          {opt}
-                        </button>
+                            formData.availability === opt ? "bg-accent/10 border-accent/30 text-accent" : "bg-background border-border text-foreground hover:border-accent/20"
+                          }`}>{opt}</button>
                       ))}
                     </div>
                   </div>
@@ -268,29 +227,13 @@ const Contribute = () => {
                       <p className="text-sm text-muted-foreground mt-1 mb-3">Optional — some projects need parts shipped to assembly points.</p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Checkbox
-                        id="canShip"
-                        checked={formData.canShip}
-                        onCheckedChange={(v) => updateField("canShip", !!v)}
-                      />
-                      <Label htmlFor="canShip" className="text-sm font-medium text-foreground cursor-pointer">
-                        Yes, I can post parts
-                      </Label>
+                      <Checkbox id="canShip" checked={formData.canShip} onCheckedChange={(v) => updateField("canShip", !!v)} />
+                      <Label htmlFor="canShip" className="text-sm font-medium text-foreground cursor-pointer">Yes, I can post parts</Label>
                     </div>
                     <AnimatePresence>
                       {formData.canShip && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <Input
-                            placeholder="Preferred carrier (e.g., USPS, FedEx)"
-                            value={formData.shippingCarrier}
-                            onChange={(e) => updateField("shippingCarrier", e.target.value)}
-                            className="text-base py-5"
-                          />
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}>
+                          <Input placeholder="Preferred carrier (e.g., CTT, DPD)" value={formData.shippingCarrier} onChange={(e) => updateField("shippingCarrier", e.target.value)} className="text-base py-5" />
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -301,47 +244,23 @@ const Contribute = () => {
                   <div className="space-y-4">
                     <div>
                       <Label className="text-base font-bold text-foreground">Activate your contribution</Label>
-                      <p className="text-sm text-muted-foreground mt-1 mb-3">
-                        Enter your email to receive your unique contributor link and project assignments.
-                      </p>
+                      <p className="text-sm text-muted-foreground mt-1 mb-3">Enter your email to receive your unique contributor link and project assignments.</p>
                     </div>
-                    <Input
-                      type="email"
-                      placeholder="your.email@example.com"
-                      value={formData.email}
-                      onChange={(e) => updateField("email", e.target.value)}
-                      className="text-base py-5"
-                      autoFocus
-                    />
+                    <Input type="email" placeholder="your.email@example.com" value={formData.email} onChange={(e) => updateField("email", e.target.value)} className="text-base py-5" autoFocus />
                   </div>
                 )}
               </motion.div>
             </AnimatePresence>
 
-            {/* Navigation */}
             <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
-              <Button
-                variant="ghost"
-                onClick={handleBack}
-                disabled={currentStep === 1}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Back
+              <Button variant="ghost" onClick={handleBack} disabled={currentStep === 1} className="text-muted-foreground hover:text-foreground">
+                <ArrowLeft className="w-4 h-4 mr-1" /> Back
               </Button>
-
-              <div className="text-xs text-muted-foreground">
-                {currentStep} of {steps.length}
-              </div>
-
-              <Button
-                onClick={handleNext}
-                disabled={!canProceed()}
-                className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold"
-              >
-                {currentStep === 6 ? "Activate" : "Next"}
-                {currentStep < 6 && <ArrowRight className="w-4 h-4 ml-1" />}
-                {currentStep === 6 && <Check className="w-4 h-4 ml-1" />}
+              <div className="text-xs text-muted-foreground">{currentStep} of {steps.length}</div>
+              <Button onClick={handleNext} disabled={!canProceed() || submitting} className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : currentStep === 6 ? "Activate" : "Next"}
+                {!submitting && currentStep < 6 && <ArrowRight className="w-4 h-4 ml-1" />}
+                {!submitting && currentStep === 6 && <Check className="w-4 h-4 ml-1" />}
               </Button>
             </div>
           </div>

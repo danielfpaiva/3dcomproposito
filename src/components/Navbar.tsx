@@ -1,13 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Printer, Menu, X } from "lucide-react";
+import { Printer, Menu, X, Shield } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -22,57 +21,43 @@ const Navbar = () => {
           </span>
         </Link>
 
-        {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-1">
           <Link to="/">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30 ${
-                isActive("/") ? "text-primary-foreground bg-navy-light/20" : ""
-              }`}
-            >
+            <Button variant="ghost" size="sm" className={`text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30 ${isActive("/") ? "text-primary-foreground bg-navy-light/20" : ""}`}>
               Dashboard
             </Button>
           </Link>
+          <Link to="/auth">
+            <Button variant="ghost" size="sm" className={`text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30 ${isActive("/auth") || isActive("/admin") ? "text-primary-foreground bg-navy-light/20" : ""}`}>
+              <Shield className="w-3.5 h-3.5 mr-1" /> Organizers
+            </Button>
+          </Link>
           <Link to="/contribute">
-            <Button
-              size="sm"
-              className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold"
-            >
+            <Button size="sm" className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
               Join the Mission
             </Button>
           </Link>
         </div>
 
-        {/* Mobile toggle */}
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden text-primary-foreground/70 hover:text-primary-foreground"
-        >
+        <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden text-primary-foreground/70 hover:text-primary-foreground">
           {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="md:hidden bg-navy-deep border-t border-navy-light/20 overflow-hidden"
-          >
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="md:hidden bg-navy-deep border-t border-navy-light/20 overflow-hidden">
             <div className="px-6 py-4 flex flex-col gap-2">
               <Link to="/" onClick={() => setMobileOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30">Dashboard</Button>
+              </Link>
+              <Link to="/auth" onClick={() => setMobileOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30">
-                  Dashboard
+                  <Shield className="w-4 h-4 mr-2" /> Organizers
                 </Button>
               </Link>
               <Link to="/contribute" onClick={() => setMobileOpen(false)}>
-                <Button className="w-full bg-accent text-accent-foreground hover:bg-emerald-light font-semibold">
-                  Join the Mission
-                </Button>
+                <Button className="w-full bg-accent text-accent-foreground hover:bg-emerald-light font-semibold">Join the Mission</Button>
               </Link>
             </div>
           </motion.div>
