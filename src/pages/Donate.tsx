@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const impactCards = [
   { amount: "10€", description: "1kg de PETG", detail: "≈ 3 peças de uma cadeira", icon: Package },
-  { amount: "25€", description: "Filamento para 1 cadeira", detail: "Material completo de um projeto", icon: Heart },
+  { amount: "350€", description: "1 cadeira completa", detail: "Filamento + envios + montagem", icon: Heart },
   { amount: "15€", description: "Custos de envio", detail: "Enviar peças ao ponto de montagem", icon: Truck },
 ];
 
@@ -117,7 +117,7 @@ const Donate = () => {
                 Entre em contacto com o Gabriel da Smart 3D para combinar a melhor forma de ajudar. MBWay, transferência ou PayPal — o que for mais fácil para si.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <a href="https://www.instagram.com/smart3d.pt/" target="_blank" rel="noopener noreferrer">
+                <a href="https://www.instagram.com/smart3d_pt?igsh=MWliNmVibGFyMXM2ZA==" target="_blank" rel="noopener noreferrer">
                   <Button size="lg" className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-bold">
                     <MessageCircle className="w-4 h-4 mr-2" /> Contactar via Instagram
                   </Button>
