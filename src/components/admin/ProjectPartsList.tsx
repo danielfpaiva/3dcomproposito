@@ -26,6 +26,7 @@ interface Contributor {
   id: string;
   name: string;
   printer_model: string;
+  region?: string;
 }
 
 interface ProjectPartsListProps {

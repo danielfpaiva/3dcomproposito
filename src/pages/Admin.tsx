@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,6 +15,8 @@ import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import ProjectProgressCard from "@/components/admin/ProjectProgressCard";
 import ProjectPartsList from "@/components/admin/ProjectPartsList";
+import AddContributorDialog from "@/components/admin/AddContributorDialog";
+import ContributorsFilters from "@/components/admin/ContributorsFilters";
 
 const Admin = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -24,6 +26,9 @@ const Admin = () => {
   const { data: stats } = useDashboardStats();
   const [activeTab, setActiveTab] = useState<"overview" | "contributors" | "projects">("overview");
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [filterSearch, setFilterSearch] = useState("");
+  const [filterRegion, setFilterRegion] = useState("all");
+  const [filterPrinter, setFilterPrinter] = useState("all");
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -68,6 +73,16 @@ const Admin = () => {
     },
     enabled: !!user,
   });
+
+  const printerModels = useMemo(() => [...new Set(contributors.map((c) => c.printer_model))].sort(), [contributors]);
+  const filteredContributors = useMemo(() => {
+    return contributors.filter((c) => {
+      if (filterSearch && !c.name.toLowerCase().includes(filterSearch.toLowerCase())) return false;
+      if (filterRegion !== "all" && c.region !== filterRegion) return false;
+      if (filterPrinter !== "all" && c.printer_model !== filterPrinter) return false;
+      return true;
+    });
+  }, [contributors, filterSearch, filterRegion, filterPrinter]);
 
   const [newProjectName, setNewProjectName] = useState("");
   const [creatingProject, setCreatingProject] = useState(false);
@@ -144,6 +159,8 @@ const Admin = () => {
   const getProjectParts = (projectId: string) => parts.filter((p) => p.project_id === projectId);
   const selectedProject = projects.find((p) => p.id === selectedProjectId);
   const selectedParts = selectedProjectId ? getProjectParts(selectedProjectId) : [];
+
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -243,40 +260,56 @@ const Admin = () => {
           )}
 
           {activeTab === "contributors" && (
-            <div className="bg-card rounded-2xl border border-border overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/30">
-                      <th className="text-left p-4 font-semibold text-foreground">Nome</th>
-                      <th className="text-left p-4 font-semibold text-foreground">Localização</th>
-                      <th className="text-left p-4 font-semibold text-foreground hidden sm:table-cell">Impressora</th>
-                      <th className="text-left p-4 font-semibold text-foreground hidden md:table-cell">Disponibilidade</th>
-                      <th className="text-left p-4 font-semibold text-foreground hidden lg:table-cell">Envia</th>
-                      <th className="text-left p-4 font-semibold text-foreground">Região</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {contributors.map((c) => (
-                      <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                        <td className="p-4">
-                          <p className="font-medium text-foreground">{c.name}</p>
-                          <p className="text-xs text-muted-foreground">{c.email}</p>
-                        </td>
-                        <td className="p-4 text-muted-foreground">{c.location}</td>
-                        <td className="p-4 text-muted-foreground hidden sm:table-cell">{c.printer_model}</td>
-                        <td className="p-4 text-muted-foreground hidden md:table-cell">{c.availability}</td>
-                        <td className="p-4 hidden lg:table-cell">
-                          {c.can_ship ? <Badge className="bg-accent/10 text-accent">Sim</Badge> : <span className="text-muted-foreground">Não</span>}
-                        </td>
-                        <td className="p-4"><Badge variant="secondary">{c.region}</Badge></td>
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                <ContributorsFilters
+                  search={filterSearch}
+                  onSearchChange={setFilterSearch}
+                  region={filterRegion}
+                  onRegionChange={setFilterRegion}
+                  printer={filterPrinter}
+                  onPrinterChange={setFilterPrinter}
+                  printerModels={printerModels}
+                />
+                <AddContributorDialog />
+              </div>
+              <div className="bg-card rounded-2xl border border-border overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/30">
+                        <th className="text-left p-4 font-semibold text-foreground">Nome</th>
+                        <th className="text-left p-4 font-semibold text-foreground">Localização</th>
+                        <th className="text-left p-4 font-semibold text-foreground hidden sm:table-cell">Impressora</th>
+                        <th className="text-left p-4 font-semibold text-foreground hidden md:table-cell">Disponibilidade</th>
+                        <th className="text-left p-4 font-semibold text-foreground hidden lg:table-cell">Envia</th>
+                        <th className="text-left p-4 font-semibold text-foreground">Região</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {contributors.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">Ainda sem voluntários nesta região. Seja o primeiro a fazer a diferença!</p>
-                )}
+                    </thead>
+                    <tbody>
+                      {filteredContributors.map((c) => (
+                        <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                          <td className="p-4">
+                            <p className="font-medium text-foreground">{c.name}</p>
+                            <p className="text-xs text-muted-foreground">{c.email}</p>
+                          </td>
+                          <td className="p-4 text-muted-foreground">{c.location}</td>
+                          <td className="p-4 text-muted-foreground hidden sm:table-cell">{c.printer_model}</td>
+                          <td className="p-4 text-muted-foreground hidden md:table-cell">{c.availability}</td>
+                          <td className="p-4 hidden lg:table-cell">
+                            {c.can_ship ? <Badge className="bg-accent/10 text-accent">Sim</Badge> : <span className="text-muted-foreground">Não</span>}
+                          </td>
+                          <td className="p-4"><Badge variant="secondary">{c.region}</Badge></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {filteredContributors.length === 0 && (
+                    <p className="text-center text-muted-foreground py-8">
+                      {contributors.length === 0 ? "Ainda sem voluntários. Adicione o primeiro!" : "Nenhum voluntário corresponde aos filtros."}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}
