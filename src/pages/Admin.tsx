@@ -8,27 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Printer, Users, Target, TrendingUp, LogOut, Plus, Loader2,
-  BarChart3, Package, Armchair,
+  Printer, Users, Target, LogOut, Plus, Loader2,
+  BarChart3, Package, Armchair, ChevronLeft,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
-import type { Tables } from "@/integrations/supabase/types";
-
-type Contributor = Tables<"contributors">;
-type WheelchairProject = Tables<"wheelchair_projects">;
-type Part = Tables<"parts">;
-
-const statusLabels: Record<string, string> = {
-  planning: "Planeamento",
-  active: "Ativo",
-  complete: "Concluído",
-  unassigned: "Não atribuído",
-  assigned: "Atribuído",
-  printing: "A imprimir",
-  printed: "Impresso",
-  shipped: "Enviado",
-};
+import ProjectProgressCard from "@/components/admin/ProjectProgressCard";
+import ProjectPartsList from "@/components/admin/ProjectPartsList";
 
 const Admin = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -37,6 +23,7 @@ const Admin = () => {
   const queryClient = useQueryClient();
   const { data: stats } = useDashboardStats();
   const [activeTab, setActiveTab] = useState<"overview" | "contributors" | "projects">("overview");
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -47,7 +34,7 @@ const Admin = () => {
     queryFn: async () => {
       const { data, error } = await supabase.from("contributors").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-      return data as Contributor[];
+      return data;
     },
     enabled: !!user,
   });
@@ -57,7 +44,7 @@ const Admin = () => {
     queryFn: async () => {
       const { data, error } = await supabase.from("wheelchair_projects").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-      return data as WheelchairProject[];
+      return data;
     },
     enabled: !!user,
   });
@@ -67,29 +54,64 @@ const Admin = () => {
     queryFn: async () => {
       const { data, error } = await supabase.from("parts").select("*");
       if (error) throw error;
-      return data as Part[];
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const { data: templates = [] } = useQuery({
+    queryKey: ["part-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("part_templates").select("*").order("sort_order");
+      if (error) throw error;
+      return data;
     },
     enabled: !!user,
   });
 
   const [newProjectName, setNewProjectName] = useState("");
-  const [newProjectParts, setNewProjectParts] = useState("");
-  const createProject = async () => {
-    if (!newProjectName.trim()) return;
-    const { error } = await supabase.from("wheelchair_projects").insert({
-      name: newProjectName,
-      target_parts: parseInt(newProjectParts) || 0,
-      status: "planning",
-    });
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Projeto criado!" });
-      setNewProjectName("");
-      setNewProjectParts("");
-      queryClient.invalidateQueries({ queryKey: ["admin-projects"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+  const [creatingProject, setCreatingProject] = useState(false);
+
+  const createProjectWithParts = async () => {
+    if (!newProjectName.trim() || creatingProject) return;
+    setCreatingProject(true);
+
+    // Create project with target_parts = template count
+    const { data: project, error: projError } = await supabase
+      .from("wheelchair_projects")
+      .insert({ name: newProjectName, target_parts: templates.length || 24, status: "planning" })
+      .select()
+      .single();
+
+    if (projError || !project) {
+      toast({ title: "Erro", description: projError?.message ?? "Erro ao criar projeto", variant: "destructive" });
+      setCreatingProject(false);
+      return;
     }
+
+    // Create all TMT parts for this project
+    const partsToInsert = templates.map((t) => ({
+      project_id: project.id,
+      part_name: t.part_name,
+      category: t.category,
+      material: t.material,
+      status: "unassigned" as const,
+    }));
+
+    if (partsToInsert.length > 0) {
+      const { error: partsError } = await supabase.from("parts").insert(partsToInsert);
+      if (partsError) {
+        toast({ title: "Projeto criado, mas erro nas peças", description: partsError.message, variant: "destructive" });
+      }
+    }
+
+    toast({ title: "Missão Criada!", description: `${project.name} com ${partsToInsert.length} peças TMT.` });
+    setNewProjectName("");
+    setCreatingProject(false);
+    setSelectedProjectId(project.id);
+    queryClient.invalidateQueries({ queryKey: ["admin-projects"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-parts"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
   };
 
   if (authLoading) {
@@ -101,6 +123,10 @@ const Admin = () => {
   }
 
   if (!user) return null;
+
+  const statusLabels: Record<string, string> = {
+    planning: "Planeamento", active: "Ativo", complete: "Concluído",
+  };
 
   const statCards = [
     { label: "Voluntários", value: stats?.total_contributors ?? 0, icon: Users, color: "text-accent" },
@@ -116,6 +142,8 @@ const Admin = () => {
   ];
 
   const getProjectParts = (projectId: string) => parts.filter((p) => p.project_id === projectId);
+  const selectedProject = projects.find((p) => p.id === selectedProjectId);
+  const selectedParts = selectedProjectId ? getProjectParts(selectedProjectId) : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -150,7 +178,7 @@ const Admin = () => {
 
           <div className="flex gap-1 mb-6 bg-muted/50 rounded-xl p-1 w-fit">
             {tabs.map((tab) => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              <button key={tab.id} onClick={() => { setActiveTab(tab.id); setSelectedProjectId(null); }}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   activeTab === tab.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}>
@@ -255,57 +283,77 @@ const Admin = () => {
 
           {activeTab === "projects" && (
             <div className="space-y-6">
+              {/* Create new project */}
               <div className="bg-card rounded-2xl border border-border p-6">
-                <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Criar Novo Projeto</h3>
+                <h3 className="text-sm font-bold text-foreground mb-3 uppercase tracking-wider">Criar Novo Projeto TMT</h3>
+                <p className="text-xs text-muted-foreground mb-4">Ao criar um projeto, as 24 peças do 3D Toddler Mobility Trainer serão automaticamente adicionadas.</p>
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Input placeholder="Nome do projeto (ex.: Cadeira Modelo A)" value={newProjectName} onChange={(e) => setNewProjectName(e.target.value)} className="flex-1" />
-                  <Input placeholder="N.º de peças" type="number" value={newProjectParts} onChange={(e) => setNewProjectParts(e.target.value)} className="w-32" />
-                  <Button onClick={createProject} className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
-                    <Plus className="w-4 h-4 mr-1" /> Criar
+                  <Input
+                    placeholder="Nome do projeto (ex.: Cadeira Lisboa #1)"
+                    value={newProjectName}
+                    onChange={(e) => setNewProjectName(e.target.value)}
+                    className="flex-1"
+                    onKeyDown={(e) => e.key === "Enter" && createProjectWithParts()}
+                  />
+                  <Button
+                    onClick={createProjectWithParts}
+                    disabled={creatingProject || !newProjectName.trim()}
+                    className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold"
+                  >
+                    {creatingProject ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
+                    Criar com {templates.length || 24} Peças
                   </Button>
                 </div>
               </div>
 
-              {projects.map((project) => {
-                const pParts = getProjectParts(project.id);
-                const done = pParts.filter((pt) => pt.status === "complete").length;
-                return (
-                  <div key={project.id} className="bg-card rounded-2xl border border-border p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-bold text-foreground">{project.name}</h3>
-                        {project.description && <p className="text-sm text-muted-foreground">{project.description}</p>}
+              {/* Project list + detail */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-1 space-y-3">
+                  <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Projetos ({projects.length})</h3>
+                  {projLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
+                  ) : projects.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">Sem projetos. Crie o primeiro acima!</p>
+                  ) : (
+                    projects.map((p) => (
+                      <ProjectProgressCard
+                        key={p.id}
+                        project={p}
+                        parts={getProjectParts(p.id)}
+                        onSelect={() => setSelectedProjectId(p.id === selectedProjectId ? null : p.id)}
+                        isSelected={p.id === selectedProjectId}
+                      />
+                    ))
+                  )}
+                </div>
+
+                <div className="lg:col-span-2">
+                  {selectedProject ? (
+                    <div className="bg-card rounded-2xl border border-border p-6">
+                      <div className="flex items-center gap-3 mb-6">
+                        <button onClick={() => setSelectedProjectId(null)} className="lg:hidden text-muted-foreground hover:text-foreground">
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <div>
+                          <h3 className="text-lg font-bold text-foreground">{selectedProject.name}</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {selectedParts.filter((p) => p.status === "complete").length}/{selectedParts.length} peças concluídas ·{" "}
+                            {selectedParts.filter((p) => p.status === "unassigned").length} por atribuir
+                          </p>
+                        </div>
                       </div>
-                      <Badge className={project.status === "complete" ? "bg-success/10 text-success" : project.status === "active" ? "bg-accent/10 text-accent" : "bg-muted text-muted-foreground"}>
-                        {statusLabels[project.status] ?? project.status}
-                      </Badge>
+                      <ProjectPartsList parts={selectedParts} contributors={contributors} />
                     </div>
-                    <div className="flex items-center gap-4 mb-3 text-sm text-muted-foreground">
-                      <span>Objetivo: {project.target_parts} peças</span>
-                      <span>Registadas: {pParts.length} peças</span>
-                      <span>Concluídas: {done}</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div className="h-2 rounded-full bg-gradient-to-r from-accent to-emerald-light transition-all" style={{ width: `${pParts.length ? (done / pParts.length) * 100 : 0}%` }} />
-                    </div>
-                    {pParts.length > 0 && (
-                      <div className="mt-4 space-y-1">
-                        {pParts.map((part) => (
-                          <div key={part.id} className="flex items-center justify-between text-sm py-1.5 border-b border-border last:border-0">
-                            <span className="text-foreground">{part.part_name}</span>
-                            <Badge className={
-                              part.status === "complete" ? "bg-success/10 text-success" :
-                              part.status === "printed" ? "bg-success/20 text-success" :
-                              part.status === "assigned" || part.status === "printing" ? "bg-accent/10 text-accent" :
-                              "bg-muted text-muted-foreground"
-                            }>{statusLabels[part.status] ?? part.status}</Badge>
-                          </div>
-                        ))}
+                  ) : (
+                    <div className="bg-card rounded-2xl border border-border p-12 flex items-center justify-center">
+                      <div className="text-center">
+                        <Package className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                        <p className="text-sm text-muted-foreground">Selecione um projeto para gerir as peças</p>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>

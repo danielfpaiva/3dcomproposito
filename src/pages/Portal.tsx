@@ -32,7 +32,7 @@ const Portal = () => {
   const [editValue, setEditValue] = useState("");
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
-  const [assignedParts, setAssignedParts] = useState<Tables<"parts">[]>([]);
+  const [assignedParts, setAssignedParts] = useState<any[]>([]);
 
   useEffect(() => {
     if (!token) {
@@ -52,9 +52,9 @@ const Portal = () => {
       }
 
       setContributor(data);
-      const { data: parts } = await supabase
-        .from("parts").select("*").eq("assigned_contributor_id", data.id);
-      setAssignedParts(parts ?? []);
+      const { data: partsData } = await supabase
+        .from("parts").select("*, wheelchair_projects(name)").eq("assigned_contributor_id", data.id);
+      setAssignedParts(partsData ?? []);
       setLoading(false);
     };
 
@@ -180,11 +180,24 @@ const Portal = () => {
               ) : (
                 <div className="space-y-3">
                   {assignedParts.map((part) => (
-                    <div key={part.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
-                      <span className="text-sm font-medium text-foreground">{part.part_name}</span>
-                      <Badge className={statusColor[part.status] ?? ""}>
-                        {statusLabels[part.status] ?? part.status}
-                      </Badge>
+                    <div key={part.id} className="p-3 bg-muted/30 rounded-xl space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-foreground">{part.part_name}</span>
+                        <Badge className={statusColor[part.status] ?? ""}>
+                          {statusLabels[part.status] ?? part.status}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {part.wheelchair_projects?.name && (
+                          <span>Projeto: {part.wheelchair_projects.name}</span>
+                        )}
+                        {part.material && (
+                          <Badge variant="secondary" className="text-[10px]">{part.material}</Badge>
+                        )}
+                        {part.category && (
+                          <span>· {part.category}</span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

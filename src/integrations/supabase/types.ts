@@ -59,11 +59,43 @@ export type Database = {
         }
         Relationships: []
       }
+      part_templates: {
+        Row: {
+          category: string
+          id: string
+          material: string
+          part_name: string
+          print_time_hours: number | null
+          sort_order: number
+          template_name: string
+        }
+        Insert: {
+          category: string
+          id?: string
+          material: string
+          part_name: string
+          print_time_hours?: number | null
+          sort_order?: number
+          template_name: string
+        }
+        Update: {
+          category?: string
+          id?: string
+          material?: string
+          part_name?: string
+          print_time_hours?: number | null
+          sort_order?: number
+          template_name?: string
+        }
+        Relationships: []
+      }
       parts: {
         Row: {
           assigned_contributor_id: string | null
+          category: string | null
           created_at: string
           id: string
+          material: string | null
           part_name: string
           project_id: string
           status: Database["public"]["Enums"]["part_status"]
@@ -71,8 +103,10 @@ export type Database = {
         }
         Insert: {
           assigned_contributor_id?: string | null
+          category?: string | null
           created_at?: string
           id?: string
+          material?: string | null
           part_name: string
           project_id: string
           status?: Database["public"]["Enums"]["part_status"]
@@ -80,8 +114,10 @@ export type Database = {
         }
         Update: {
           assigned_contributor_id?: string | null
+          category?: string | null
           created_at?: string
           id?: string
+          material?: string | null
           part_name?: string
           project_id?: string
           status?: Database["public"]["Enums"]["part_status"]
