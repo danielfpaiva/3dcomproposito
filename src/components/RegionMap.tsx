@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Printer, Target } from "lucide-react";
+import { Printer } from "lucide-react";
 import { useRegionalStats } from "@/hooks/useDashboardStats";
 
 interface Region {
@@ -35,8 +35,8 @@ const RegionMap = () => {
     <section className="py-20 px-6 bg-background">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-black text-foreground mb-3">Impact by Region</h2>
-          <p className="text-muted-foreground text-lg">Hover over a region to see printer activity</p>
+          <h2 className="text-3xl font-black text-foreground mb-3">Impacto por Região</h2>
+          <p className="text-muted-foreground text-lg">Passe o rato sobre uma região para ver a atividade das impressoras</p>
         </div>
 
         <div className="relative bg-card rounded-2xl border border-border p-8 shadow-sm overflow-hidden">
@@ -87,7 +87,7 @@ const RegionMap = () => {
                 <div className="flex items-center gap-4 text-sm">
                   <div className="flex items-center gap-1.5">
                     <Printer className="w-3.5 h-3.5 text-accent" />
-                    <span>{getRegionPrinters(hoveredRegion)} printers</span>
+                    <span>{getRegionPrinters(hoveredRegion)} impressoras</span>
                   </div>
                 </div>
               </motion.div>

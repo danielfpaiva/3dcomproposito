@@ -13,7 +13,7 @@ const Footer = () => {
         </Link>
 
         <p className="text-xs text-primary-foreground/30 flex items-center gap-1">
-          Made with <Heart className="w-3 h-3 text-accent/60" /> for communities that build together
+          Feito com <Heart className="w-3 h-3 text-accent/60" /> para comunidades que constroem juntas
         </p>
       </div>
     </footer>

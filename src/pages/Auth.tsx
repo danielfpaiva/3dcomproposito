@@ -24,16 +24,16 @@ const Auth = () => {
     if (isLogin) {
       const { error } = await signIn(email, password);
       if (error) {
-        toast({ title: "Login failed", description: error.message, variant: "destructive" });
+        toast({ title: "Falha no login", description: error.message, variant: "destructive" });
       } else {
         navigate("/admin");
       }
     } else {
       const { error } = await signUp(email, password, fullName);
       if (error) {
-        toast({ title: "Signup failed", description: error.message, variant: "destructive" });
+        toast({ title: "Falha no registo", description: error.message, variant: "destructive" });
       } else {
-        toast({ title: "Check your email", description: "We sent you a confirmation link." });
+        toast({ title: "Verifique o seu email", description: "Enviámos-lhe um link de confirmação." });
       }
     }
     setSubmitting(false);
@@ -47,36 +47,36 @@ const Auth = () => {
             <Printer className="w-6 h-6 text-accent-foreground" />
           </div>
           <h1 className="text-2xl font-black text-primary-foreground">
-            {isLogin ? "Welcome back, Commander" : "Join the Command Center"}
+            {isLogin ? "Bem-vindo de volta, Comandante" : "Junte-se ao Centro de Comando"}
           </h1>
           <p className="text-sm text-primary-foreground/50 mt-1">
-            {isLogin ? "Sign in to manage missions" : "Create your organizer account"}
+            {isLogin ? "Inicie sessão para gerir missões" : "Crie a sua conta de organizador"}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-card rounded-2xl border border-border p-6 space-y-4">
           {!isLogin && (
             <div>
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" required />
+              <Label htmlFor="fullName">Nome Completo</Label>
+              <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="O seu nome" required />
             </div>
           )}
           <div>
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@exemplo.com" required />
           </div>
           <div>
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Palavra-passe</Label>
             <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
           </div>
           <Button type="submit" disabled={submitting} className="w-full bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
             <LogIn className="w-4 h-4 mr-2" />
-            {isLogin ? "Sign In" : "Create Account"}
+            {isLogin ? "Entrar" : "Criar Conta"}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
-            {isLogin ? "Need an account?" : "Already have an account?"}{" "}
+            {isLogin ? "Precisa de uma conta?" : "Já tem conta?"}{" "}
             <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-accent font-medium hover:underline">
-              {isLogin ? "Sign up" : "Sign in"}
+              {isLogin ? "Registar" : "Entrar"}
             </button>
           </p>
         </form>

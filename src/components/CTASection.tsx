@@ -22,15 +22,15 @@ const CTASection = () => {
         <div className="relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 mb-6">
             <Sparkles className="w-3.5 h-3.5 text-accent" />
-            <span className="text-xs font-semibold text-emerald-light">Every printer makes a difference</span>
+            <span className="text-xs font-semibold text-emerald-light">Cada impressora faz a diferença</span>
           </div>
 
           <h2 className="text-3xl sm:text-4xl font-black text-primary-foreground mb-4">
-            Ready to make an impact?
+            Pronto para fazer a diferença?
           </h2>
           <p className="text-primary-foreground/60 mb-8 max-w-lg mx-auto leading-relaxed">
-            Register your 3D printer, share your availability, and get matched
-            with wheelchair projects that need your skills.
+            Registe a sua impressora 3D, partilhe a sua disponibilidade e seja associado
+            a projetos de cadeiras de rodas que precisam das suas competências.
           </p>
 
           <Link to="/contribute">
@@ -38,7 +38,7 @@ const CTASection = () => {
               size="lg"
               className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-bold text-base px-8 py-6 rounded-xl glow-accent"
             >
-              Join the Mission
+              Juntar-me à Missão
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>

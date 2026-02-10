@@ -8,9 +8,9 @@ const HeroSection = () => {
   const { data: stats } = useDashboardStats();
 
   const statItems = [
-    { icon: Users, value: stats?.total_contributors ?? 0, label: "Contributors Joined" },
-    { icon: Printer, value: stats?.parts_completed ?? 0, label: "Parts Completed" },
-    { icon: Heart, value: stats?.wheelchairs_completed ?? 0, label: "Wheelchairs Completed" },
+    { icon: Users, value: stats?.total_contributors ?? 0, label: "Voluntários Inscritos" },
+    { icon: Printer, value: stats?.parts_completed ?? 0, label: "Peças Concluídas" },
+    { icon: Heart, value: stats?.wheelchairs_completed ?? 0, label: "Cadeiras Concluídas" },
   ];
 
   return (
@@ -25,27 +25,27 @@ const HeroSection = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-6">
             <span className="w-2 h-2 rounded-full bg-accent animate-pulse-glow" />
-            <span className="text-sm font-medium text-emerald-light">Live Mission — Portugal</span>
+            <span className="text-sm font-medium text-emerald-light">Missão Ativa — Portugal</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-primary-foreground leading-tight mb-6">
-            Transform scattered prints into<br />
-            <span className="text-gradient-hero">collective impact.</span>
+            Transforme impressões dispersas em<br />
+            <span className="text-gradient-hero">impacto coletivo.</span>
           </h1>
 
           <p className="text-lg text-primary-foreground/60 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Coordinate distributed 3D printing of wheelchair parts for charity.
-            Every printer matters. Every part counts. Every chair changes a life.
+            Coordene a impressão 3D distribuída de peças de cadeiras de rodas para solidariedade.
+            Cada impressora conta. Cada peça importa. Cada cadeira muda uma vida.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <Link to="/contribute">
               <Button size="lg" className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-bold text-base px-8 py-6 rounded-xl glow-accent">
-                Join the Mission <ArrowRight className="ml-2 w-5 h-5" />
+                Juntar-me à Missão <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
             <Button variant="outline" size="lg" className="border-primary-foreground/20 text-primary-foreground/80 hover:bg-primary-foreground/5 hover:text-primary-foreground font-medium text-base px-8 py-6 rounded-xl bg-transparent">
-              See How It Works
+              Como Funciona
             </Button>
           </div>
         </motion.div>

@@ -16,22 +16,25 @@ import { PORTUGAL_REGIONS } from "@/lib/regions";
 import { useQueryClient } from "@tanstack/react-query";
 
 const steps = [
-  { id: 1, label: "Your Name", icon: User },
-  { id: 2, label: "Location", icon: MapPin },
-  { id: 3, label: "Printer", icon: Printer },
-  { id: 4, label: "Availability", icon: Calendar },
-  { id: 5, label: "Shipping", icon: Package },
-  { id: 6, label: "Activate", icon: Mail },
+  { id: 1, label: "Nome", icon: User },
+  { id: 2, label: "Localização", icon: MapPin },
+  { id: 3, label: "Impressora", icon: Printer },
+  { id: 4, label: "Disponibilidade", icon: Calendar },
+  { id: 5, label: "Envio", icon: Package },
+  { id: 6, label: "Ativar", icon: Mail },
 ];
 
 const printerModels = [
   "Prusa i3 MK3S+", "Prusa MINI+", "Creality Ender 3 V2", "Creality CR-10",
-  "Bambu Lab X1 Carbon", "Bambu Lab P1S", "Anycubic Kobra 2", "Voron 2.4", "Other",
+  "Bambu Lab X1 Carbon", "Bambu Lab P1S", "Anycubic Kobra 2", "Voron 2.4", "Outra",
 ];
 
 const availabilityOptions = [
-  "Weekdays (9am–5pm)", "Evenings (5pm–10pm)", "Weekends only",
-  "Flexible / Anytime", "Limited (a few hours/week)",
+  "Dias úteis (9h–17h)",
+  "Noites (17h–22h)",
+  "Apenas fins de semana",
+  "Flexível / Qualquer altura",
+  "Limitado (algumas horas/semana)",
 ];
 
 const Contribute = () => {
@@ -68,7 +71,6 @@ const Contribute = () => {
       return;
     }
 
-    // Submit to database
     setSubmitting(true);
     const { data, error } = await supabase.from("contributors").insert({
       name: formData.name.trim(),
@@ -82,7 +84,7 @@ const Contribute = () => {
     }).select("token").single();
 
     if (error) {
-      toast({ title: "Submission failed", description: error.message, variant: "destructive" });
+      toast({ title: "Erro ao submeter", description: error.message, variant: "destructive" });
       setSubmitting(false);
       return;
     }
@@ -111,16 +113,16 @@ const Contribute = () => {
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ duration: 0.4, delay: 0.2, type: "spring", stiffness: 200 }} className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6">
               <Check className="w-10 h-10 text-accent" />
             </motion.div>
-            <h1 className="text-3xl font-black text-foreground mb-3">Mission Accomplished!</h1>
-            <p className="text-muted-foreground mb-2">Welcome aboard, <span className="font-semibold text-foreground">{formData.name}</span>.</p>
-            <p className="text-muted-foreground text-sm mb-6">Bookmark your portal link to manage your contribution and see assignments:</p>
+            <h1 className="text-3xl font-black text-foreground mb-3">Missão Cumprida!</h1>
+            <p className="text-muted-foreground mb-2">Bem-vindo/a a bordo, <span className="font-semibold text-foreground">{formData.name}</span>.</p>
+            <p className="text-muted-foreground text-sm mb-6">Guarde o link do seu portal para gerir a sua contribuição e ver as atribuições:</p>
             <div className="bg-card border border-border rounded-xl p-4 mb-6">
-              <p className="text-xs text-muted-foreground mb-1">Your Portal Link</p>
+              <p className="text-xs text-muted-foreground mb-1">O Seu Link do Portal</p>
               <p className="text-sm font-mono text-accent break-all">{portalLink}</p>
             </div>
             <a href={portalLink}>
               <Button className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
-                Go to My Portal
+                Ir para o Meu Portal
               </Button>
             </a>
           </motion.div>
@@ -136,8 +138,8 @@ const Contribute = () => {
       <div className="pt-28 pb-20 px-6">
         <div className="max-w-lg mx-auto">
           <div className="text-center mb-10">
-            <h1 className="text-3xl font-black text-foreground mb-2">Join the Mission</h1>
-            <p className="text-muted-foreground">Tell us about your setup — takes under 2 minutes</p>
+            <h1 className="text-3xl font-black text-foreground mb-2">Juntar-me à Missão</h1>
+            <p className="text-muted-foreground">Conte-nos sobre o seu equipamento — demora menos de 2 minutos</p>
           </div>
 
           <div className="flex items-center justify-center gap-2 mb-10">
@@ -158,24 +160,24 @@ const Contribute = () => {
                 {currentStep === 1 && (
                   <div className="space-y-4">
                     <div>
-                      <Label className="text-base font-bold text-foreground">What's your name?</Label>
-                      <p className="text-sm text-muted-foreground mt-1 mb-3">So we know who's making the magic happen.</p>
+                      <Label className="text-base font-bold text-foreground">Como se chama?</Label>
+                      <p className="text-sm text-muted-foreground mt-1 mb-3">Para sabermos quem está a fazer a magia acontecer.</p>
                     </div>
-                    <Input placeholder="e.g., João Silva" value={formData.name} onChange={(e) => updateField("name", e.target.value)} className="text-base py-5" autoFocus />
+                    <Input placeholder="ex.: João Silva" value={formData.name} onChange={(e) => updateField("name", e.target.value)} className="text-base py-5" autoFocus />
                   </div>
                 )}
 
                 {currentStep === 2 && (
                   <div className="space-y-4">
                     <div>
-                      <Label className="text-base font-bold text-foreground">Where are you located?</Label>
-                      <p className="text-sm text-muted-foreground mt-1 mb-3">City or postal code — helps us match you with nearby projects.</p>
+                      <Label className="text-base font-bold text-foreground">Onde se encontra?</Label>
+                      <p className="text-sm text-muted-foreground mt-1 mb-3">Cidade ou código postal — ajuda-nos a associá-lo a projetos próximos.</p>
                     </div>
-                    <Input placeholder="e.g., Porto or 4000-001" value={formData.location} onChange={(e) => updateField("location", e.target.value)} className="text-base py-5" autoFocus />
+                    <Input placeholder="ex.: Porto ou 4000-001" value={formData.location} onChange={(e) => updateField("location", e.target.value)} className="text-base py-5" autoFocus />
                     <div>
-                      <Label className="text-sm font-medium text-foreground">Region</Label>
+                      <Label className="text-sm font-medium text-foreground">Região</Label>
                       <Select value={formData.region} onValueChange={(v) => updateField("region", v)}>
-                        <SelectTrigger className="mt-1"><SelectValue placeholder="Select region" /></SelectTrigger>
+                        <SelectTrigger className="mt-1"><SelectValue placeholder="Selecionar região" /></SelectTrigger>
                         <SelectContent>
                           {PORTUGAL_REGIONS.map((r) => (
                             <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
@@ -189,11 +191,11 @@ const Contribute = () => {
                 {currentStep === 3 && (
                   <div className="space-y-4">
                     <div>
-                      <Label className="text-base font-bold text-foreground">What printer do you have?</Label>
-                      <p className="text-sm text-muted-foreground mt-1 mb-3">This helps us determine which parts you can print.</p>
+                      <Label className="text-base font-bold text-foreground">Que impressora tem?</Label>
+                      <p className="text-sm text-muted-foreground mt-1 mb-3">Isto ajuda-nos a determinar que peças pode imprimir.</p>
                     </div>
                     <Select value={formData.printer} onValueChange={(v) => updateField("printer", v)}>
-                      <SelectTrigger className="text-base py-5"><SelectValue placeholder="Select your printer model" /></SelectTrigger>
+                      <SelectTrigger className="text-base py-5"><SelectValue placeholder="Selecionar modelo de impressora" /></SelectTrigger>
                       <SelectContent>
                         {printerModels.map((model) => (
                           <SelectItem key={model} value={model}>{model}</SelectItem>
@@ -206,8 +208,8 @@ const Contribute = () => {
                 {currentStep === 4 && (
                   <div className="space-y-4">
                     <div>
-                      <Label className="text-base font-bold text-foreground">When are you available to print?</Label>
-                      <p className="text-sm text-muted-foreground mt-1 mb-3">Rough availability so we can plan timelines.</p>
+                      <Label className="text-base font-bold text-foreground">Quando está disponível para imprimir?</Label>
+                      <p className="text-sm text-muted-foreground mt-1 mb-3">Disponibilidade aproximada para planearmos os prazos.</p>
                     </div>
                     <div className="space-y-2">
                       {availabilityOptions.map((opt) => (
@@ -223,17 +225,17 @@ const Contribute = () => {
                 {currentStep === 5 && (
                   <div className="space-y-5">
                     <div>
-                      <Label className="text-base font-bold text-foreground">Can you ship printed parts?</Label>
-                      <p className="text-sm text-muted-foreground mt-1 mb-3">Optional — some projects need parts shipped to assembly points.</p>
+                      <Label className="text-base font-bold text-foreground">Pode enviar peças impressas?</Label>
+                      <p className="text-sm text-muted-foreground mt-1 mb-3">Opcional — alguns projetos precisam que as peças sejam enviadas para pontos de montagem.</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <Checkbox id="canShip" checked={formData.canShip} onCheckedChange={(v) => updateField("canShip", !!v)} />
-                      <Label htmlFor="canShip" className="text-sm font-medium text-foreground cursor-pointer">Yes, I can post parts</Label>
+                      <Label htmlFor="canShip" className="text-sm font-medium text-foreground cursor-pointer">Sim, posso enviar peças</Label>
                     </div>
                     <AnimatePresence>
                       {formData.canShip && (
                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}>
-                          <Input placeholder="Preferred carrier (e.g., CTT, DPD)" value={formData.shippingCarrier} onChange={(e) => updateField("shippingCarrier", e.target.value)} className="text-base py-5" />
+                          <Input placeholder="Transportadora preferida (ex.: CTT, DPD)" value={formData.shippingCarrier} onChange={(e) => updateField("shippingCarrier", e.target.value)} className="text-base py-5" />
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -243,10 +245,10 @@ const Contribute = () => {
                 {currentStep === 6 && (
                   <div className="space-y-4">
                     <div>
-                      <Label className="text-base font-bold text-foreground">Activate your contribution</Label>
-                      <p className="text-sm text-muted-foreground mt-1 mb-3">Enter your email to receive your unique contributor link and project assignments.</p>
+                      <Label className="text-base font-bold text-foreground">Ative a sua contribuição</Label>
+                      <p className="text-sm text-muted-foreground mt-1 mb-3">Introduza o seu email para receber o seu link único de voluntário e atribuições de projetos.</p>
                     </div>
-                    <Input type="email" placeholder="your.email@example.com" value={formData.email} onChange={(e) => updateField("email", e.target.value)} className="text-base py-5" autoFocus />
+                    <Input type="email" placeholder="o.seu.email@exemplo.com" value={formData.email} onChange={(e) => updateField("email", e.target.value)} className="text-base py-5" autoFocus />
                   </div>
                 )}
               </motion.div>
@@ -254,11 +256,11 @@ const Contribute = () => {
 
             <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
               <Button variant="ghost" onClick={handleBack} disabled={currentStep === 1} className="text-muted-foreground hover:text-foreground">
-                <ArrowLeft className="w-4 h-4 mr-1" /> Back
+                <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
               </Button>
-              <div className="text-xs text-muted-foreground">{currentStep} of {steps.length}</div>
+              <div className="text-xs text-muted-foreground">{currentStep} de {steps.length}</div>
               <Button onClick={handleNext} disabled={!canProceed() || submitting} className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : currentStep === 6 ? "Activate" : "Next"}
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : currentStep === 6 ? "Ativar" : "Seguinte"}
                 {!submitting && currentStep < 6 && <ArrowRight className="w-4 h-4 ml-1" />}
                 {!submitting && currentStep === 6 && <Check className="w-4 h-4 ml-1" />}
               </Button>
