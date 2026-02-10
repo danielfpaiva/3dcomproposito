@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { ArrowLeft, ArrowRight, Check, User, MapPin, Printer, Calendar, Mail, Package, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, User, MapPin, Printer, Calendar, Mail, Package, Loader2, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PORTUGAL_REGIONS } from "@/lib/regions";
@@ -20,9 +20,10 @@ const steps = [
   { id: 2, label: "Localização", icon: MapPin },
   { id: 3, label: "Impressora", icon: Printer },
   { id: 4, label: "Materiais", icon: Package },
-  { id: 5, label: "Disponibilidade", icon: Calendar },
-  { id: 6, label: "Envio", icon: Package },
-  { id: 7, label: "Ativar", icon: Mail },
+  { id: 5, label: "Experiência", icon: Star },
+  { id: 6, label: "Disponibilidade", icon: Calendar },
+  { id: 7, label: "Envio", icon: Package },
+  { id: 8, label: "Ativar", icon: Mail },
 ];
 
 const printerModels = [
@@ -62,11 +63,25 @@ const availabilityOptions = [
   "Limitado (algumas horas/semana)",
 ];
 
+const experienceLevels = [
+  { value: "beginner", label: "Iniciante", description: "Comecei recentemente a imprimir 3D" },
+  { value: "intermediate", label: "Intermédio", description: "Já imprimi vários projetos com sucesso" },
+  { value: "expert", label: "Experiente", description: "Domino calibração, materiais e projetos complexos" },
+];
+
+const turnaroundOptions = [
+  { value: "1-2 weeks", label: "1–2 semanas" },
+  { value: "2-4 weeks", label: "2–4 semanas" },
+  { value: "4-6 weeks", label: "4–6 semanas" },
+  { value: "6+ weeks", label: "6+ semanas" },
+];
+
 const Contribute = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: "", location: "", region: "centro", printer: "", materials: [] as string[],
     availability: "", canShip: false, shippingCarrier: "", email: "", phone: "",
+    buildVolumeOk: false, experienceLevel: "intermediate", turnaroundTime: "", willingToCollaborate: false,
   });
   const [submitted, setSubmitted] = useState(false);
   const [portalLink, setPortalLink] = useState("");
@@ -84,15 +99,16 @@ const Contribute = () => {
       case 2: return formData.location.trim().length > 0 && formData.region.length > 0;
       case 3: return formData.printer.length > 0;
       case 4: return formData.materials.length > 0;
-      case 5: return formData.availability.length > 0;
-      case 6: return true;
-      case 7: return formData.email.includes("@");
+      case 5: return formData.experienceLevel.length > 0;
+      case 6: return formData.availability.length > 0;
+      case 7: return true;
+      case 8: return formData.email.includes("@");
       default: return false;
     }
   };
 
   const handleNext = async () => {
-    if (currentStep < 7) {
+    if (currentStep < 8) {
       setCurrentStep((prev) => prev + 1);
       return;
     }
@@ -109,6 +125,10 @@ const Contribute = () => {
       can_ship: formData.canShip,
       shipping_carrier: formData.canShip ? formData.shippingCarrier : null,
       phone: formData.phone.trim() || null,
+      build_volume_ok: formData.buildVolumeOk,
+      experience_level: formData.experienceLevel,
+      turnaround_time: formData.turnaroundTime || null,
+      willing_to_collaborate: formData.willingToCollaborate,
     } as any).select("token").single();
 
     if (error) {
@@ -170,9 +190,9 @@ const Contribute = () => {
             <p className="text-muted-foreground">Conte-nos sobre o seu equipamento — demora menos de 2 minutos</p>
           </div>
 
-          <div className="flex items-center justify-center gap-2 mb-10">
+          <div className="flex items-center justify-center gap-1.5 mb-10 flex-wrap">
             {steps.map((step) => (
-              <div key={step.id} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
+              <div key={step.id} className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
                 step.id === currentStep ? "bg-accent/10 text-accent border border-accent/20"
                 : step.id < currentStep ? "bg-accent/5 text-accent/60" : "text-muted-foreground/40"
               }`}>
@@ -230,6 +250,15 @@ const Contribute = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    <div className="mt-4 p-3 bg-muted/50 rounded-xl border border-border">
+                      <div className="flex items-start gap-3">
+                        <Checkbox id="buildVolume" checked={formData.buildVolumeOk} onCheckedChange={(v) => updateField("buildVolumeOk", !!v)} className="mt-0.5" />
+                        <Label htmlFor="buildVolume" className="text-sm font-medium text-foreground cursor-pointer leading-snug">
+                          A minha impressora tem pelo menos <span className="font-bold text-accent">256 × 256 × 256 mm</span> de volume de impressão
+                          <span className="block text-xs text-muted-foreground mt-1">Requisito mínimo para imprimir peças do TMT. <a href="https://makerworld.com/en/models/556576" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Ver modelo original →</a></span>
+                        </Label>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -258,6 +287,26 @@ const Contribute = () => {
                 {currentStep === 5 && (
                   <div className="space-y-4">
                     <div>
+                      <Label className="text-base font-bold text-foreground">Qual é o seu nível de experiência?</Label>
+                      <p className="text-sm text-muted-foreground mt-1 mb-3">Ajuda-nos a atribuir peças adequadas ao seu perfil.</p>
+                    </div>
+                    <div className="space-y-2">
+                      {experienceLevels.map((lvl) => (
+                        <button key={lvl.value} onClick={() => updateField("experienceLevel", lvl.value)}
+                          className={`w-full text-left px-4 py-3 rounded-xl border text-sm transition-all duration-200 ${
+                            formData.experienceLevel === lvl.value ? "bg-accent/10 border-accent/30 text-accent" : "bg-background border-border text-foreground hover:border-accent/20"
+                          }`}>
+                          <span className="font-medium">{lvl.label}</span>
+                          <span className="block text-xs mt-0.5 opacity-70">{lvl.description}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {currentStep === 6 && (
+                  <div className="space-y-4">
+                    <div>
                       <Label className="text-base font-bold text-foreground">Quando está disponível para imprimir?</Label>
                       <p className="text-sm text-muted-foreground mt-1 mb-3">Disponibilidade aproximada para planearmos os prazos.</p>
                     </div>
@@ -269,10 +318,21 @@ const Contribute = () => {
                           }`}>{opt}</button>
                       ))}
                     </div>
+                    <div className="mt-4">
+                      <Label className="text-sm font-medium text-foreground mb-2 block">Tempo estimado de entrega</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {turnaroundOptions.map((opt) => (
+                          <button key={opt.value} onClick={() => updateField("turnaroundTime", opt.value)}
+                            className={`px-3 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                              formData.turnaroundTime === opt.value ? "bg-accent/10 border-accent/30 text-accent" : "bg-background border-border text-foreground hover:border-accent/20"
+                            }`}>{opt.label}</button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                {currentStep === 6 && (
+                {currentStep === 7 && (
                   <div className="space-y-5">
                     <div>
                       <Label className="text-base font-bold text-foreground">Pode enviar peças impressas?</Label>
@@ -289,10 +349,16 @@ const Contribute = () => {
                         </motion.div>
                       )}
                     </AnimatePresence>
+                    <div className="flex items-center gap-3 pt-2">
+                      <Checkbox id="willingToCollaborate" checked={formData.willingToCollaborate} onCheckedChange={(v) => updateField("willingToCollaborate", !!v)} />
+                      <Label htmlFor="willingToCollaborate" className="text-sm font-medium text-foreground cursor-pointer">
+                        Disponível para colaborar com outros makers na minha região
+                      </Label>
+                    </div>
                   </div>
                 )}
 
-                {currentStep === 7 && (
+                {currentStep === 8 && (
                   <div className="space-y-4">
                     <div>
                       <Label className="text-base font-bold text-foreground">Ative a sua contribuição</Label>
@@ -311,9 +377,9 @@ const Contribute = () => {
               </Button>
               <div className="text-xs text-muted-foreground">{currentStep} de {steps.length}</div>
               <Button onClick={handleNext} disabled={!canProceed() || submitting} className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : currentStep === 7 ? "Ativar" : "Seguinte"}
-                {!submitting && currentStep < 7 && <ArrowRight className="w-4 h-4 ml-1" />}
-                {!submitting && currentStep === 7 && <Check className="w-4 h-4 ml-1" />}
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : currentStep === 8 ? "Ativar" : "Seguinte"}
+                {!submitting && currentStep < 8 && <ArrowRight className="w-4 h-4 ml-1" />}
+                {!submitting && currentStep === 8 && <Check className="w-4 h-4 ml-1" />}
               </Button>
             </div>
           </div>

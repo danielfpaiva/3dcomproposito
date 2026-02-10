@@ -70,10 +70,14 @@ const AddContributorDialog = () => {
     can_ship: false,
     phone: "",
     materials: ["PETG"] as string[],
+    build_volume_ok: false,
+    experience_level: "intermediate",
+    turnaround_time: "",
+    willing_to_collaborate: false,
   });
 
   const resetForm = () =>
-    setForm({ name: "", email: "", location: "", region: "centro", printer_model: "", availability: "Disponível", can_ship: false, phone: "", materials: ["PETG"] });
+    setForm({ name: "", email: "", location: "", region: "centro", printer_model: "", availability: "Disponível", can_ship: false, phone: "", materials: ["PETG"], build_volume_ok: false, experience_level: "intermediate", turnaround_time: "", willing_to_collaborate: false });
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.email.trim() || !form.location.trim() || !form.printer_model) {
@@ -91,6 +95,10 @@ const AddContributorDialog = () => {
       can_ship: form.can_ship,
       phone: form.phone.trim() || null,
       materials: form.materials,
+      build_volume_ok: form.build_volume_ok,
+      experience_level: form.experience_level,
+      turnaround_time: form.turnaround_time || null,
+      willing_to_collaborate: form.willing_to_collaborate,
     } as any);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -178,6 +186,39 @@ const AddContributorDialog = () => {
           <div className="flex items-center gap-2">
             <Checkbox id="can_ship" checked={form.can_ship} onCheckedChange={(v) => setForm({ ...form, can_ship: !!v })} />
             <Label htmlFor="can_ship" className="text-sm">Pode enviar peças por correio</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox id="build_volume_ok" checked={form.build_volume_ok} onCheckedChange={(v) => setForm({ ...form, build_volume_ok: !!v })} />
+            <Label htmlFor="build_volume_ok" className="text-sm">Volume ≥ 256×256×256mm</Label>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Experiência</Label>
+              <Select value={form.experience_level} onValueChange={(v) => setForm({ ...form, experience_level: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="beginner">Iniciante</SelectItem>
+                  <SelectItem value="intermediate">Intermédio</SelectItem>
+                  <SelectItem value="expert">Experiente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Turnaround</Label>
+              <Select value={form.turnaround_time} onValueChange={(v) => setForm({ ...form, turnaround_time: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1-2 weeks">1–2 semanas</SelectItem>
+                  <SelectItem value="2-4 weeks">2–4 semanas</SelectItem>
+                  <SelectItem value="4-6 weeks">4–6 semanas</SelectItem>
+                  <SelectItem value="6+ weeks">6+ semanas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox id="willing_to_collaborate" checked={form.willing_to_collaborate} onCheckedChange={(v) => setForm({ ...form, willing_to_collaborate: !!v })} />
+            <Label htmlFor="willing_to_collaborate" className="text-sm">Disponível para colaborar</Label>
           </div>
         </div>
         <DialogFooter>
