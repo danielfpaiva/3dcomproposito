@@ -1,96 +1,54 @@
 
-# Duas Novas Areas: Donativos e Inscricao de Beneficiarios
+# Contador de Donativos + Opcoes de Acao na Pagina Inicial
 
-## Resumo
+## O que vamos fazer
 
-Adicionar duas funcionalidades novas ao PrintImpact Connect:
-
-1. **Pagina de Donativos** -- para quem quer ajudar financeiramente (comprar filamento, custos de envio, futuras acoes)
-2. **Pagina de Inscricao de Beneficiarios** -- para familias/instituicoes que precisam de cadeiras de rodas (ou futuros projetos similares)
-
----
-
-## 1. Pagina de Donativos (`/donate`)
-
-Uma pagina simples e emocional com:
-- Explicacao do impacto de cada donativo (ex: "10EUR = 1kg de PETG = ~3 pecas")
-- Botao para contactar o criador Gabriel da Smart 3d da facilidade esta parte por agora
-- Opcao de deixar nome e email para agradecimento publico (opcional)
-- Contador de donativos recebidos (opcional, fase futura)
-
-
-## 2. Pagina de Inscricao de Beneficiarios (`/request`)
-
-Formulario para quem precisa de uma cadeira de rodas (ou equipamento similar):
-- Nome do responsavel / instituicao
-- Email e telefone de contacto
-- Localizacao (regiao)
-- Para quem e (crianca/adulto, idade aproximada)
-- Descricao da necessidade
-- Como soube do projeto
-- Estado: "pendente" ate um organizador validar
+1. **Contador publico de donativos** no ProgressSection (junto aos outros stats)
+2. **Nova seccao de escolha** na pagina inicial entre "Imprimir 3D" e "Doar Dinheiro" (substituir ou complementar o CTA atual)
 
 ---
 
 ## Detalhes Tecnicos
 
-### Base de Dados -- 2 novas tabelas
+### 1. Atualizar a view `dashboard_stats` no banco de dados
 
-**Tabela `donations`:**
-- `id` (uuid, PK)
-- `donor_name` (text, nullable -- anonimo se quiser)
-- `donor_email` (text, nullable)
-- `amount_cents` (integer) -- valor em centimos
-- `method` (text) -- "mbway", "transferencia", "paypal", "outro"
-- `message` (text, nullable) -- mensagem opcional
-- `public_name` (boolean, default false) -- se quer nome visivel
-- `created_at` (timestamp)
+A view atual nao inclui dados de donativos. Vamos recria-la para adicionar:
+- `total_donations` -- numero total de donativos registados
+- `total_donated_cents` -- soma total em centimos
 
-RLS: Qualquer pessoa pode inserir. So organizadores podem ver/gerir.
+```sql
+CREATE OR REPLACE VIEW public.dashboard_stats AS
+SELECT
+  (SELECT count(*) FROM contributors) AS total_contributors,
+  (SELECT count(*) FROM wheelchair_projects) AS total_projects,
+  (SELECT count(*) FROM parts) AS total_parts,
+  (SELECT count(*) FROM parts WHERE status = 'complete') AS parts_completed,
+  (SELECT count(*) FROM parts WHERE status IN ('assigned','printing','printed','shipped')) AS parts_in_progress,
+  (SELECT count(*) FROM wheelchair_projects WHERE status = 'complete') AS wheelchairs_completed,
+  (SELECT count(*) FROM donations) AS total_donations,
+  (SELECT COALESCE(sum(amount_cents), 0) FROM donations) AS total_donated_cents;
+```
 
-**Tabela `beneficiary_requests`:**
-- `id` (uuid, PK)
-- `contact_name` (text)
-- `contact_email` (text)
-- `contact_phone` (text, nullable)
-- `region` (text)
-- `beneficiary_age` (text) -- ex: "3 anos", "adulto"
-- `beneficiary_type` (text) -- "crianca", "adulto"
-- `description` (text) -- descricao da necessidade
-- `how_found_us` (text, nullable)
-- `status` (text, default "pendente") -- pendente, em_avaliacao, aprovado, concluido
-- `notes` (text, nullable) -- notas internas dos organizadores
-- `created_at` (timestamp)
-- `updated_at` (timestamp)
+### 2. ProgressSection -- adicionar metrica de donativos
 
-RLS: Qualquer pessoa pode inserir. So organizadores podem ver/gerir.
+Adicionar um 4o card na grelha de metricas:
+- Icone: Heart (ou Euro)
+- Label: "Total Doado"
+- Valor: formatar `total_donated_cents / 100` como euros (ex: "150€")
 
-### Novas Paginas
+### 3. HeroSection ou nova seccao -- dual CTA
 
-1. **`src/pages/Donate.tsx`** -- Pagina de donativos com:
-   - Secao hero emocional explicando o impacto
-   - Cards com metodos de pagamento (MBWay, IBAN, PayPal)
-   - Formulario opcional para registar donativo (nome, email, valor, metodo)
-   - Design consistente com o resto da app
+Atualizar a seccao CTA (ou a HeroSection) para apresentar duas opcoes claras lado a lado:
+- **Card 1**: "Tenho uma impressora 3D" -> link para `/contribute`
+- **Card 2**: "Quero ajudar com donativo" -> link para `/donate`
+- Manter tambem o link "Pedir Ajuda" para `/request`
 
-2. **`src/pages/Request.tsx`** -- Formulario de inscricao de beneficiarios com:
-   - Formulario multi-step (3-4 passos) seguindo o padrao do `/contribute`
-   - Passo 1: Dados de contacto (nome, email, telefone)
-   - Passo 2: Localizacao (regiao)
-   - Passo 3: Detalhes da necessidade (tipo, idade, descricao)
-   - Passo 4: Submissao
-   - Mensagem de confirmacao apos submissao
+Vamos adicionar isto como uma nova seccao entre o ProgressSection e o CTASection existente, com dois cards visuais grandes.
 
-### Alteracoes a Ficheiros Existentes
+### Ficheiros afetados
 
-1. **`src/App.tsx`** -- Adicionar rotas `/donate` e `/request`
-2. **`src/components/Navbar.tsx`** -- Adicionar links "Doar" e "Pedir Ajuda" na navegacao
-3. **`src/components/CTASection.tsx`** -- Adicionar botoes secundarios para donativos e pedidos de ajuda
-4. **`src/components/HeroSection.tsx`** -- Adicionar stat de donativos ou pedidos (opcional)
-5. **`src/pages/Admin.tsx`** -- Adicionar tab/seccao para gerir pedidos de beneficiarios e ver donativos
-
-### Ficheiros Novos
-
-1. `supabase/migrations/` -- Migracao com 2 tabelas novas + RLS
-2. `src/pages/Donate.tsx`
-3. `src/pages/Request.tsx`
+1. `supabase/migrations/` -- recriar view dashboard_stats com colunas de donativos
+2. `src/hooks/useDashboardStats.ts` -- tipos ja vao ser atualizados automaticamente
+3. `src/components/ProgressSection.tsx` -- adicionar metrica de donativos
+4. `src/pages/Index.tsx` -- adicionar nova seccao de escolha dual
+5. Novo ficheiro `src/components/DualCTASection.tsx` -- seccao com os dois cards de acao
