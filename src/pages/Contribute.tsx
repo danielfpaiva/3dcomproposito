@@ -316,7 +316,7 @@ const Contribute = () => {
                           <Checkbox id="buildVolume" checked={formData.buildVolumeOk} onCheckedChange={(v) => updateField("buildVolumeOk", !!v)} className="mt-0.5" />
                           <Label htmlFor="buildVolume" className="text-sm font-medium text-foreground cursor-pointer leading-snug">
                             A minha impressora tem pelo menos <span className="font-bold text-accent">256 × 256 × 256 mm</span> de volume de impressão
-                            <span className="block text-xs text-muted-foreground mt-1">Requisito mínimo para peças TMT. <a href="https://makerworld.com/en/models/556576" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Ver modelo →</a></span>
+                            <span className="block text-xs text-muted-foreground mt-1">Requisito mínimo para peças TMT. <a href="https://makerworld.com/en/models/2066081-3d-toddler-mobility-trainer" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Ver modelo →</a></span>
                           </Label>
                         </div>
                       </div>
