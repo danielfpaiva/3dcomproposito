@@ -78,9 +78,9 @@ Deno.serve(async (req) => {
     );
   }
 
-  type PartRow = { part_name: string; wheelchair_projects: { name: string } | null };
-  const projectNames = [...new Set((parts as PartRow[]).map((p) => p.wheelchair_projects?.name).filter(Boolean))] as string[];
-  const partNames = (parts as PartRow[]).map((p) => p.part_name);
+  type PartRow = { part_name: string; wheelchair_projects: { name: string }[] | null };
+  const projectNames = [...new Set((parts as unknown as PartRow[]).map((p) => p.wheelchair_projects?.[0]?.name).filter(Boolean))] as string[];
+  const partNames = (parts as unknown as PartRow[]).map((p) => p.part_name);
   const portalUrl = `${PORTAL_BASE}/portal?token=${encodeURIComponent(contributor.token)}`;
 
   const subject = partNames.length === 1
