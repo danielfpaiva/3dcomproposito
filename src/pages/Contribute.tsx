@@ -11,6 +11,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ArrowLeft, ArrowRight, Check, User, MapPin, Printer, Calendar, Mail, Package, Loader2, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import ResourceLinks from "@/components/ResourceLinks";
 import { useToast } from "@/hooks/use-toast";
 import { PORTUGAL_REGIONS } from "@/lib/regions";
 import { getSuggestedBuildPlate } from "@/lib/printerBuildPlates";
@@ -188,6 +189,7 @@ const Contribute = () => {
                 Ir para o Meu Portal
               </Button>
             </a>
+            <ResourceLinks variant="inline" className="mt-6 justify-center" />
           </motion.div>
         </div>
         <Footer />
