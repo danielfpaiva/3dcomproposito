@@ -3,31 +3,46 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Printer, Users } from "lucide-react";
 import { useRegionalStats } from "@/hooks/useDashboardStats";
 
-interface Region {
-  id: string;
-  name: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+const REGION_NAMES: Record<string, string> = {
+  norte: "Norte",
+  centro: "Centro",
+  lisboa: "Lisboa",
+  alentejo: "Alentejo",
+  algarve: "Algarve",
+  acores: "Açores",
+  madeira: "Madeira",
+};
 
-const regionLayout: Region[] = [
-  { id: "norte", name: "Norte", x: 25, y: 2, width: 28, height: 22 },
-  { id: "centro", name: "Centro", x: 18, y: 24, width: 30, height: 20 },
-  { id: "lisboa", name: "Lisboa", x: 15, y: 46, width: 22, height: 16 },
-  { id: "alentejo", name: "Alentejo", x: 22, y: 62, width: 32, height: 18 },
-  { id: "algarve", name: "Algarve", x: 20, y: 80, width: 30, height: 14 },
-  { id: "acores", name: "Açores", x: 68, y: 10, width: 22, height: 18 },
-  { id: "madeira", name: "Madeira", x: 68, y: 55, width: 22, height: 18 },
-];
+// SVG paths from PortugalSVG repository (https://github.com/AfonsoFG/PortugalSVG)
+// License: cc-by-sa-4.0 Por: Afonso Gomes
+const REGION_PATHS: Record<string, string> = {
+  // Continental regions from regioes2N.svg (NUTS 2)
+  // Moved +6000 units to the right to avoid overlap with islands
+  norte: "M9470 6075c30 4 77 44 116 43 8 0 126-37 126-37 59 30 19 95 16 106-18 70 96 218 101 256 2 20-21 66 21 124 25 36 45 38 77 21 39-20 133-124 127-80l-26 126c-9 47-102 54-80 96 56 109 65 67 76 80 2 3-14 66-16 69-15 21-95 34-58 78 3 3 6 76 10 80 22 27 87 11 105 55 6 16-10 26-14 41-8 33 47 93 76 53 20-28-11-94 39-94 97 0 104 12 195-18 34-11 15 38 18 41 37 44 73 20 73 18 138-359 219-14 291-57 76-46 126-28 216 0 14 4 42 76 57 71 25-8 54-152 94-186 59-49 13-151-5-199-60-161 65-118 140-46 31 29 98 20 124-41 32-76 97 49 165 48 7 0 82-25 115-30 8-77 6-120-48-185-50-59-7-112-17-147-12-46-74-103-45-142 39-54 44-138 107-124 6 1 23 8 23 0 4-48 7-42 37-85 6-8 68 68 140 23 29-18 12-30 89 60 35 41 240 2 241 2 106-75 30-200 130-238 4-2 219-33 211-23-29 38-92 90-87 137 3 24 149 19 197 74 18 20 103 177 145 110 21-35 31-65 71-90 19-12 210 23 128 101-4 4 25 71 28 71 60-2 88-24 137 14 41 32 101 149 53 197-46 46-43 60-35 73 19 28 88 205 145 161 60-47 109-42 190-35 28 3 62 38 55 67-13 50 35 63 67 94 24 25 7-93 20-110 3-5 84-104 89-110 5-4 139 25 152 30 106 34 245 327 307 256 26-30 122-227 140-272 22-58 5-51-58-113-51-51-21-130 12-139 71-21 147 28 174 50 26 21 133-126 151-144 6-6 24-168 23-172-6-22-187-104-195-117-7-13 4-92 7-94 9-6 168-30 186-30 118-1 311 48 328 48 44 0 19-88 55-114 38-28 86-14 137-3 59 13 72 27 99 80 6 13 15 40-3 46-90 34-68-52-50 113 2 22 55 25 55 64 0 34-37 158-66 172-8 3 146 84 185 89s76-213 151-273c14-10 340 53 385-52 17-38 36-227 72-246 27-14 101 18 144 23 22 3 66 4 82-11l33-98 196 65 131-32 98-66 97-130v-196l66 65 32-98-32-130 261-262v-130l98-66 65-130c150 0 99 10 229-33l98 66c83-126 53-87 163-196l98 65 33-131 130-32 65-98 33-98 98-98 33-98 98-98 98 33 98-66-66-98 98-32v-131l33-98 65-98 98-98 65-130c81-163 53-114 164-262l-33-97-98-33-131-163-130-131c-100 14-189 33-286 33l57-98c-170 0-122 8-282-24l54-74h-258l29 130-98 66-196-98-65-229-33-98 66-196v-130l65-98v-131l33-130-98-33-145-218 112 22V979c-105-70-77-44-163-130l-162 165-1-2-164 98-98-65-98-33h-98l-65-228-163-33c0 149 10 99-33 228l-98 33-163 33-228-66-131-97-98 97c-150 0-99-10-229 33-72-108-41-77-133-157l3 89-65 35-33-97-52 24-46-57 33 130-131-130-45 67 12 129 66 130-131 196-98 66-33 98-65-98-130 98h-33l-131 32-130-32-66 97-65 66-98 32-98-261-130 33-98-33-33 131-196 65h-163l98-261h-131l-196-65-98-66-359 98-196 33-65 98-130 33 32-131v-131l-32-98c-91 137-67 100-131 262h-131l-98 32-65 131-33 98-98-33-65 98-98 33-130-33h-98l-98-33v-195c-145-109-108-64-196-196l65-229 98-65 33-98 98-65 32-98 98-33 66-98V522l-33-98-98-32h-131l-98 65-65-228 33-131-33-98-196 98-294 196-32 98-131-33-196 65-261-32-163 32-65 131-196-33-196 98-66 196-195 98-131 98-33 163-228 98-196 262-33 97 33 131-33 98-1 264 34 128 130 228 164 653v261l65 131v131l-33 196 66 195 65 98 33 98v131c56 170 92 361 107 541l154 308 65 196v196l65 228c23 79-20 158-30 231z",
+  centro: "M6434 16559l-35-104 32-98-32-98 32-130h66l-66-98v-164l98-195 66-164 65-130 98-262-33-97 33-98v-131l-33-98 27-36-92-62v-131l-131-32 66-98 98 65 65-98h130l131-98 196-196 163-261 131-98 98-98 163-261 65-98-65-130 98-229 131-457 293-784 229-685 131-490-33-98-131-131 33-163 64 13 99-470 98-392 261-1077 66-294 98-522 163-686c45-188 75-347 100-520 30 4 77 44 116 43 8 0 126-37 126-37 59 30 19 95 16 106-18 70 96 218 101 256 2 20-21 66 21 124 25 36 45 38 77 21 39-20 133-124 127-80l-26 126c-9 47-102 54-80 96 56 109 65 67 76 80 2 3-14 66-16 69-15 21-95 34-58 78 3 3 6 76 10 80 22 27 87 11 105 55 6 16-10 26-14 41-8 33 47 93 76 53 20-28-11-94 39-94 97 0 104 12 195-18 34-11 15 38 18 41 37 44 73 20 73 18 138-359 219-14 291-57 76-46 126-28 216 0 14 4 42 76 57 71 25-8 54-152 94-186 59-49 13-151-5-199-60-161 65-118 140-46 31 29 98 20 124-41 32-76 97 49 165 48 7 0 82-25 115-30 8-77 6-120-48-185-50-59-7-112-17-147-12-46-74-103-45-142 39-54 44-138 107-124 6 1 23 8 23 0 4-48 7-42 37-85 6-8 68 68 140 23 29-18 12-30 89 60 35 41 240 2 241 2 106-75 30-200 130-238 4-2 219-33 211-23-29 38-92 90-87 137 3 24 149 19 197 74 18 20 103 177 145 110 21-35 31-65 71-90 19-12 210 23 128 101-4 4 25 71 28 71 60-2 88-24 137 14 41 32 101 149 53 197-46 46-43 60-35 73 19 28 88 205 145 161 60-47 109-42 190-35 28 3 62 38 55 67-13 50 35 63 67 94 24 25 7-93 20-110 3-5 84-104 89-110 5-4 139 25 152 30 106 34 245 327 307 256 26-30 122-227 140-272 22-58 5-51-58-113-51-51-21-130 12-139 71-21 147 28 174 50 26 21 133-126 151-144 6-6 24-168 23-172-6-22-187-104-195-117-7-13 4-92 7-94 9-6 168-30 186-30 118-1 311 48 328 48 44 0 19-88 55-114 38-28 86-14 137-3 59 13 72 27 99 80 6 13 15 40-3 46-90 34-68-52-50 113 2 22 55 25 55 64 0 34-37 158-66 172-8 3 146 84 185 89s76-213 151-273c14-10 340 53 385-52 17-38 36-227 72-246 27-14 101 18 144 23 22 3 66 4 82-11l33 98 131 98 32 98 98 130 33 164 65 97 131 131-65 98v163l-33 131v163l56 71 42 223v326l-131 196v131l131 65 65 229-98 98-98 196 66 261 97 98 98 65-32 196c-13 79-119 28-183 89l-111 107 33 98-71 143-27-45h-196l-131 98-98-33-98 196-32 131 32 97 33 131 33 98c51 155 123-53 261 33 113 70-32 185 98 228l98 33 65 196v130l-33 98v131l-65 196v130l-33 164-98 65-32 98-98 33-66 130 66 131-66 98 33 130-98 131-32 163-196 65-98-32h-131l-98 65-392-65-163 32-130 66h-196l-131 32-98-32-98-66h-326c-112 62-208 2-238 102-19 60-97 95-154 123-78 39-95-153-186-116-193 78-119 167-137 214-36 95-47 43-132 81-103 46-311 281-388 395-30 43-382-236-430-223-59 15-25 64-73 158-212 415-109 291 149 530 114 105-277 283-311 284-24 0-188 376-221 420-75 99-120 0-158-28-62-45-178 65-160 133 17 68-9 171-68 142l-5-3c-386-192-303-103-509-874-34-130-100-234-141-283-16-19-527-4-591 100-310 501-279 43-413 181-49 50-13 15-105-67-141-127-206 179-388 30-52-43-210 143-191 42 87-465 187-561-546-323-51 16-145 357-179 374-162 81-134-8-200 151-43 105 30 194 35 223 9 49-52 126-42 135 123 98 39 433-53 546-7 8 198 149 241 163 75 24-17 73 89 197 49 58-24 107-91 107-60 0 54 273-23 212-102-82 57 105 70 125-8 51-1 103-33 147-23 31-45-33-91-58-57-33-70 24-95 51-32 37-122-50-142-68-53-18-77 2-62 31 17 34 126 263 48 251-75-13-50-14-113 39-19 15-101-51-128-67 0 0-62 36-47 67 77 54 99 40 72 133-8 29-58 37-88 30-89-23-56-86-107-93-109-16-109 19-121 44-8 18-116 126-146 128-6 0-86-49-110-54-64-12-7 129-6 142 1 64-31 170-54 126l-21-40c-4-6-40-1-44 0-249 36-80-109-172-74-102 38-109 51-186 0-20-13-65-91-119-91-23 0 20-183-193-134zM6095 14045c126 0 126 199 0 199s-126-199 0-199z",
+  lisboa: "M8249 17358c39 2 100 42 162 78 15 8 139 118 205 67 59-45 132-108 216-27 45 44 280 140 293 96 22-73 100-90 29-170-54-61 48-147 90-207 35-51 57-181 87-168 40 18 226 258 261 100 12-53 90-125 139-96 26 15-74 245-67 305 5 46 333 99 366 99 116 2 1 123 36 182 38 64 157 178 86 214-71 37-153 19-230 21-84 2-277 230-354 305-143 139-58 154-20 297 16 58-161 124-264 214-148 129-176-115-216 0-23 69 110 114-27 235-30 26-78 38-112 22-121-57-213-164-322-242-119-87-130 48-151 90l-66 131h-130l-98 65-66 98-97 65-98 33h-131l-98-33-98 66h-130l-98 65-131 33c-133 33 56-102 98-229l65-196v-163l-32-163-131-294-33-98-65-98-16-49 196-33 228-65-16 82 196 65 98-65 65-98 65-164 98-65v-131h131l-98-65 98-98 87-11zm-316-217l-98 65-98 98v228l-32 131-98 98c-24 24-356 100-359 98l-66-33h-130l-164 66-130 32-131-65-98-65-98 32H6268l-130-65 65-131 163-98-163 33-65-98v-163l65-98 32-98 66-131 32-163 101-255c213-49 170 134 193 134 54 0 99 78 119 91 77 51 84 38 186 0 92-35-77 110 172 74 4-1 40-6 44 0l21 40c23 44 55-62 54-126-1-13-58-154 6-142 24 5 104 54 110 54 30-2 138-110 146-128 12-25 12-60 121-44 51 7 18 70 107 93 30 7 80-1 88-30 27-93 5-79-72-133-15-31 47-67 47-67 27 16 109 82 128 67 63-53 38-52 113-39 78 12-31-217-48-251-15-29 9-49 62-31 20 18 110 105 142 68 25-27 38-84 95-51 46 25 68 89 91 58 32-44 25-96 33-147 30-33 212 15 258 22 41 6 86 22 103 60 0 0-31 242-32 279-1 48-86 60-131 73-53 15-26 77-31 115-7 49-83 68-80 125 4 64-211 364-216 364-49 4-89-120-91-157-2-19 38-24 39-42 7-104-62-69-62-100 1-123 37-117 0-225-11-33-48 53-59 85-15 44-3 96-25 136-31 54-88 88-133 130-19 18-47 26-59 53-66 143 92 111 60 174z",
+  alentejo: "M13941 12798l98 294 65 98 131 65 65 131 163 98 98 196 98 65h131l130 98-33 229-74 186 42 42v163l130 98 66 98 130 98-65 131 33 98v130l130 131h66l228 65c144 41-139 144-33 229l164 131 261-98 196 98 98 163v130l65 98-131 229-130 196-33 98-98 65 66 98v131l-98 32c-135 45 9 229-131 229h-131c-162 0-2 153-130 196l-98 32-98 131-131 65-65 196-33 294 98 65-65 196-98 163-33 164-65 163-33 98 98-33c128-43-284 145-130 196l98 33 98 65 65 163 98 131 196 196 65 163 65 98 98 33 33 195 229 327 65-98h163c166 0 32-83 196-131 128-37 282-115 196 0l-98 131-33 98v130l-130 556c-126 42-81 21-196 97l-98-97-98-33-98 33-33 130-130 98-98-33h-131l-130 33v131l-33 98v130l-33 98-65 131-65 196-98 130-98 66-65 97-196 131-98 294c-70 168-85 73-33 228l-131 196-32 98-65 98-33 98-369 5-30-20-201 203h-36l-9-36-73 9-28-34c-159 12-254 28-387 126l-35-14c-124 69-274 139-390 215l9 37-82 12-69 38 20 75-38-1-52 53c-53-24-171 5-226 28l-147 47-3 79 63 50 1 37-186 61c2 63-99 142-163 153-53-48-207-39-267-21-89-27-131-32-209-84-3-7-188-154-233-198h-81c-8-29-28-183-31-218l-183-17-12 43c-88-53-312 36-396 82l20 104-57 58-32-20c-49 20-45 38-87 72-183-60-136-14-251-32-46-46-99-87-141-135-51-4-210 36-273 49l-48 107-43-9-66-99c-74 22-220 49-285 8l-74-145-34-15-75 33 32-98v-131l33-98v-130l-65-229-66-130 98-294v-425l-32-130v-164l32-195 33-98-33-262-32-97-131-66-196-65c33-98 45-133 98-229 128-232 67-68 163-359l98-294 66-326v-425l-33-326-65-229-33-130-98-163-261-262-65-163c21-42 32-177 151-90 109 78 201 185 322 242 34 16 82 4 112-22 137-121 4-166 27-235 40-115 68 129 216 0 103-90 280-156 264-214-38-143-123-158 20-297 77-75 270-303 354-305 77-2 159 16 230-21 71-36-48-150-86-214-35-59 80-180-36-182-33 0-361-53-366-99-7-60 93-290 67-305-49-29-127 43-139 96-35 158-221-82-261-100-30-13-52 117-87 168-42 60-144 146-90 207 71 80-7 97-29 170-13 44-248-52-293-96-84-81-157-18-216 27-66 51-190-59-205-67-62-36-123-76-162-78l-87-21-163-294-66 98s-126-31-60-174c12-27 40-35 59-53 45-42 102-76 133-130 22-40 10-92 25-136 11-32 48-118 59-85 37 108 1 102 0 225 0 31 69-4 62 100-1 18-41 23-39 42 2 37 42 161 91 157 5 0 220-300 216-364-3-57 73-76 80-125 5-38-22-100 31-115 45-13 130-25 131-73 1-37 32-279 32-279-17-38-62-54-103-60-46-7-228-55-258-22-13-20-172-207-70-125 77 61-37-212 23-212 67 0 140-49 91-107-106-124-14-173-89-197-43-14-248-155-241-163 92-113 176-448 53-546-10-9 51-86 42-135-5-29-78-118-35-223 66-159 38-70 200-151 34-17 128-358 179-374 733-238 633-142 546 323-19 101 139-85 191-42 182 149 247-157 388-30 92 82 56 117 105 67 134-138 103 320 413-181 64-104 575-119 591-100 41 49 107 153 141 283 206 771 123 682 509 874l5 3c59 29 85-74 68-142-18-68 98-178 160-133 38 28 83 127 158 28 33-44 197-420 221-420 34-1 425-179 311-284-258-239-361-115-149-530 48-94 14-143 73-158 48-13 400 266 430 223 77-114 285-349 388-395 85-38 96 14 132-81 18-47-56-136 137-214 91-37 108 155 186 116 57-28 135-63 154-123 30-100 126-40 238-102z",
+  algarve: "M8913 24291v130l-131 229-65 131-98 163 65 228-32 131-98 196-98 32 32 131-65 196-98 163v131l-131 98v163l98 33 71 37 118-32 73-103h130l98-98 229-33 130-33 164-65 97-98 35 70 31-70 98-65 228-33h131l130 66 392 130 294-98 98 33 163 130 163-32 196-65h131l294 97 130 66 555 359v65h327l196-130 98-98 326-262 261-130 196-196 392-196 229-65 178 51-48-312-65-98c49-198 34-91 0-229l-33-196v-326l-32-131-66-163-32-163-66-98-97-98-33-98v-131l-369 5-30-20-201 203h-36l-9-36-73 9-28-34c-159 12-254 28-387 126l-35-14c-124 69-274 139-390 215l9 37-82 12-69 38 20 75-38-1-52 53c-53-24-171 5-226 28l-147 47-3 79 63 50 1 37-186 61c2 63-99 142-163 153-53-48-207-39-267-21-89-27-131-32-209-84-3-7-188-154-233-198h-81c-8-29-28-183-31-218l-183-17-12 43c-88-53-312 36-396 82l20 104-57 58-32-20c-49 20-45 38-87 72-183-60-136-14-251-32-46-46-99-87-141-135-51-4-210 36-273 49l-48 107-43-9-66-99c-74 22-220 49-285 8l-74-145-34-15-75 33z",
 
-// Scale for color intensity: use log-like scale so 10–200+ volunteers look good
-const maxForScale = 120;
-function intensityFromCount(count: number): number {
-  if (count <= 0) return 0;
-  return Math.min(1, Math.log2(1 + count) / Math.log2(1 + maxForScale));
-}
+  // Islands from arquipelagos.svg
+  // Scaled 2x and repositioned to the left side of continental Portugal
+  // Moved down (+5000 in Y) to align better vertically
+  acores: "M-7000 18000 l-16 22 -16 24 0 0 m-1260 -1698 c-66,-110 -150,-256 -190,-352 -190,92 -216,-140 -314,-162 -172,-20 -98,184 -242,220 56,154 -90,260 -8,368 -34,122 56,250 22,354 2,174 202,108 326,136 144,0 222,-62 266,-198 14,-150 94,-170 92,-308 14,-22 60,-22 50,-56 m 1258 1696 l-18 20 -14 18 m 8394 3810 c90,92 376,44 232,-130 -152,-50 -72,-222 -196,-210 -146,-24 -260,32 -390,22 -122,88 -34,244 62,310 94,24 228,-128 292,8 z m-9664 -6738 c-6,-180 220,-178 224,-10 86,122 -186,360 -186,210 50,-96 -116,-114 -38,-200 z m 42 1192 l-2 -6 2 6 z m 1194 1778 c60,-168 244,-160 364,-74 80,118 278,102 292,248 -62,86 20,232 -76,274 0,164 -124,80 -252,110 -134,-26 -296,56 -398,-48 44,-156 -44,-230 -186,-270 -128,-64 -230,-200 -12,-202 82,-22 206,18 268,-38 z m 34 -42 c-46,58 -48,58 0,0 z m 3406 -1800 c166,74 198,-18 118,-154 68,-124 -80,-104 -172,-240 -118,-94 -244,-72 -304,52 -30,80 84,250 176,256 62,32 122,56 182,86 z m-1154 1172 c190,112 442,150 644,274 148,56 294,102 448,152 130,74 238,176 390,214 88,112 256,124 376,210 136,92 354,120 422,280 -174,88 -406,76 -544,-64 -202,-68 -346,-254 -572,-254 -190,-2 -300,-190 -486,-208 -152,-42 -272,-144 -416,-204 -136,-36 -126,-210 -280,-224 -102,-72 -220,-156 -266,-268 90,10 210,28 284,92 z m-1220 1612 c-24,-102 -180,-200 -128,-328 14,-210 264,-356 458,-280 222,-60 406,70 592,162 72,138 224,190 372,192 98,80 178,162 290,218 134,16 256,46 388,78 104,6 252,70 270,182 -72,64 -256,100 -354,62 -116,-16 -298,-82 -390,4 -112,106 -306,118 -362,-56 -204,-6 -404,8 -594,-60 -114,-54 -244,22 -364,-78 -32,-40 -124,-76 -178,-96 z m 0 0 l 0 0 0 0 z m 4380 -2476 c176,26 358,30 538,86 170,0 262,106 328,244 -64,76 44,158 14,272 -120,130 -134,296 -360,230 -144,-4 -276,-72 -416,-18 -100,-44 -268,-12 -366,-74 -162,-88 -358,-172 -350,-390 -36,-182 122,-322 288,-322 108,-40 212,-48 324,-28 z m 1894 4150 c-162,22 -330,-8 -478,36 -158,4 -214,-178 -382,-162 -160,-92 -306,124 -464,38 -92,-68 -176,-124 -274,-212 -86,-92 -204,-112 -278,-220 -146,-108 -88,-258 26,-354 102,-64 236,-114 342,-22 148,42 160,174 266,278 102,82 250,18 350,106 150,12 308,-2 418,-120 122,80 228,82 372,60 118,-46 280,-96 392,-170 158,-10 314,38 466,10 106,-16 286,-14 288,126 26,112 8,270 -12,362 -56,102 -248,172 -354,98 -146,-52 -242,74 -368,96 -118,-32 -200,94 -310,50 z",
+  madeira: "M-5500 8000 c-64,42 -150,96 -212,88 -74,90 -236,-118 -318,-120 -346,-14 -628,-212 -932,-344 -162,46 -236,-68 -360,-164 -192,-168 -436,-256 -646,-394 -212,-210 -308,-488 -420,-758 -96,-184 260,-280 352,-444 172,-310 522,-132 648,126 58,178 272,108 310,202 116,82 288,74 426,134 184,-36 302,-64 526,-202 258,56 404,-4 604,-30 198,-78 494,268 516,322 34,130 174,160 266,272 30,172 668,150 782,294 796,-10 84,92 -152,214 -40,124 -130,232 -192,362 -148,10 -264,138 -260,276 -60,58 -150,136 -218,196 -86,48 -240,62 -346,-8 -116,-22 -260,-68 -374,-22 z m 3102 574 c98,58 184,158 270,248 24,140 134,256 128,424 26,54 68,296 -16,280 -52,-118 -154,-236 -242,-350 26,-138 -130,-198 -150,-272 36,-118 -4,-218 10,-330 z m 406 1098 c132,128 56,318 196,432 74,140 60,222 -152,140 -54,-188 -124,-374 -44,-572 z m-366 -4454 c112,-30 214,-200 238,-352 -18,-194 132,-172 268,-322 122,-94 606,-282 670,-28 -90,156 44,234 -28,412 -34,60 -340,8 -508,120 -302,200 -260,592 -640,170 z",
+};
+
+// Label positions for each region (adjusted for PortugalSVG paths)
+const LABEL_POSITIONS: Record<string, { x: number; y: number }> = {
+  // Continental regions shifted +6000 to the right
+  norte: { x: 11000, y: 4000 },
+  centro: { x: 9500, y: 10000 },
+  lisboa: { x: 7900, y: 18500 },
+  alentejo: { x: 15500, y: 17500 },
+  algarve: { x: 9500, y: 25500 },
+  // Islands positioned on the left (2x scale, moved down +5000)
+  acores: { x: -6000, y: 18000 },
+  madeira: { x: -4500, y: 8000 },
+};
 
 const RegionMap = () => {
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
@@ -37,86 +52,183 @@ const RegionMap = () => {
     const stat = regionalStats.find((s) => s.region === regionId);
     const volunteers = stat?.contributor_count ?? 0;
     const printers = stat?.printer_count ?? 0;
-    const intensity = Math.max(intensityFromCount(volunteers), intensityFromCount(printers));
-    return { volunteers, printers, intensity };
+    return { volunteers, printers };
   };
 
   return (
-    <section className="py-20 px-6 bg-background">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-12">
+    <section className="py-12 px-6 bg-background">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-8">
           <h2 className="text-3xl font-black text-foreground mb-3">Impacto por Região</h2>
-          <p className="text-muted-foreground text-lg">Passe o rato sobre uma região para ver voluntários e impressoras</p>
+          <p className="text-muted-foreground text-lg">
+            Clique numa região para ver os detalhes
+          </p>
         </div>
 
-        <div className="relative bg-card rounded-2xl border border-border p-8 shadow-sm overflow-hidden">
+        <div className="relative bg-card rounded-2xl border border-border shadow-lg p-6">
           {isLoading ? (
-            <div className="flex items-center justify-center min-h-[300px] text-muted-foreground">A carregar…</div>
+            <div className="flex items-center justify-center min-h-[300px] text-muted-foreground">
+              A carregar…
+            </div>
           ) : (
             <>
-              <div className="relative w-full aspect-[2/1] min-h-[300px]">
-                {regionLayout.map((region) => {
-                  const isHovered = hoveredRegion === region.id;
-                  const { volunteers, printers, intensity } = getRegionStat(region.id);
+              {/* SVG Map - Combined viewBox for continental Portugal + islands */}
+              <svg
+                viewBox="0 0 12969 26676"
+                className="w-full h-auto"
+                style={{ maxHeight: "450px" }}
+              >
+                {/* Background grid lines (subtle) */}
+                <defs>
+                  <pattern id="grid" width="800" height="800" patternUnits="userSpaceOnUse">
+                    <path
+                      d="M 800 0 L 0 0 0 800"
+                      fill="none"
+                      stroke="hsl(213 52% 24% / 0.03)"
+                      strokeWidth="20"
+                    />
+                  </pattern>
+                </defs>
+                <rect width="12969" height="26676" fill="url(#grid)" />
+
+                {/* Region paths */}
+                {Object.entries(REGION_PATHS).map(([regionId, path]) => {
+                  const { volunteers, printers } = getRegionStat(regionId);
+                  const isHovered = hoveredRegion === regionId;
+
+                  return (
+                    <g key={regionId}>
+                      {/* Region shape */}
+                      <motion.path
+                        d={path}
+                        className="cursor-pointer"
+                        fill={
+                          isHovered
+                            ? "hsl(160 84% 39% / 0.3)"
+                            : "hsl(213 52% 24% / 0.15)"
+                        }
+                        stroke={
+                          isHovered ? "hsl(160 84% 39%)" : "#000000"
+                        }
+                        strokeWidth={isHovered ? 3 : 1.5}
+                        onMouseEnter={() => setHoveredRegion(regionId)}
+                        onMouseLeave={() => setHoveredRegion(null)}
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ duration: 0.2 }}
+                        style={{
+                          transformOrigin: `${LABEL_POSITIONS[regionId].x}px ${LABEL_POSITIONS[regionId].y}px`,
+                        }}
+                      />
+
+                      {/* Stats label inside region */}
+                      <g
+                        className="pointer-events-none"
+                        opacity={isHovered ? 1 : 0.8}
+                      >
+                        <text
+                          x={LABEL_POSITIONS[regionId].x}
+                          y={LABEL_POSITIONS[regionId].y - 300}
+                          className={`font-bold ${
+                            isHovered ? "fill-accent" : "fill-navy-deep"
+                          }`}
+                          textAnchor="middle"
+                          style={{ fontSize: "500px" }}
+                        >
+                          {REGION_NAMES[regionId]}
+                        </text>
+                        <text
+                          x={LABEL_POSITIONS[regionId].x}
+                          y={LABEL_POSITIONS[regionId].y + 200}
+                          className={`font-semibold ${
+                            isHovered ? "fill-accent" : "fill-navy-deep/70"
+                          }`}
+                          textAnchor="middle"
+                          style={{ fontSize: "350px" }}
+                        >
+                          {volunteers} 👤 • {printers} 🖨️
+                        </text>
+                      </g>
+                    </g>
+                  );
+                })}
+              </svg>
+
+              {/* Hover Tooltip */}
+              <AnimatePresence>
+                {hoveredRegion && (() => {
+                  // Position tooltip at top for southern regions (Algarve, Alentejo) to avoid overlap
+                  const isSouthernRegion = hoveredRegion === 'algarve' || hoveredRegion === 'alentejo';
+                  const positionClass = isSouthernRegion
+                    ? "absolute top-6 left-1/2 -translate-x-1/2"
+                    : "absolute bottom-6 left-1/2 -translate-x-1/2";
 
                   return (
                     <motion.div
-                      key={region.id}
-                      className="absolute rounded-xl cursor-pointer transition-colors duration-200 flex items-center justify-center"
-                      style={{
-                        left: `${region.x}%`, top: `${region.y}%`,
-                        width: `${region.width}%`, height: `${region.height}%`,
-                        backgroundColor: isHovered ? `hsl(160 84% 39% / 0.25)` : `hsl(213 52% 24% / ${0.06 + intensity * 0.2})`,
-                        borderWidth: 2,
-                        borderColor: isHovered ? `hsl(160 84% 39% / 0.5)` : `hsl(213 52% 24% / ${0.08 + intensity * 0.12})`,
-                      }}
-                      onMouseEnter={() => setHoveredRegion(region.id)}
-                      onMouseLeave={() => setHoveredRegion(null)}
-                      whileHover={{ scale: 1.02 }}
+                      initial={{ opacity: 0, y: isSouthernRegion ? -8 : 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: isSouthernRegion ? -8 : 8 }}
                       transition={{ duration: 0.15 }}
+                      className={`${positionClass} bg-navy-deep text-primary-foreground px-6 py-4 rounded-xl shadow-xl border-2 border-accent/40 min-w-[280px] z-50`}
                     >
-                      <div className="flex flex-col items-center gap-1">
+                      <p className="font-bold text-lg mb-3">{REGION_NAMES[hoveredRegion]}</p>
+                      <div className="flex items-center gap-6 text-sm">
                         <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1">
-                            <Users className="w-3 h-3" />
-                            <span className={`text-xs font-semibold ${isHovered ? "text-accent" : "text-foreground/50"}`}>{volunteers}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Printer className="w-3 h-3" />
-                            <span className={`text-xs font-semibold ${isHovered ? "text-accent" : "text-foreground/50"}`}>{printers}</span>
+                          <Users className="w-5 h-5 text-accent" />
+                          <div>
+                            <div className="text-2xl font-black">
+                              {getRegionStat(hoveredRegion).volunteers}
+                            </div>
+                            <div className="text-xs opacity-80">voluntários</div>
                           </div>
                         </div>
-                        <span className={`text-[10px] font-medium ${isHovered ? "text-foreground/70" : "text-foreground/25"} hidden sm:block`}>{region.name}</span>
+                        <div className="w-px h-12 bg-white/20" />
+                        <div className="flex items-center gap-2">
+                          <Printer className="w-5 h-5 text-accent" />
+                          <div>
+                            <div className="text-2xl font-black">
+                              {getRegionStat(hoveredRegion).printers}
+                            </div>
+                            <div className="text-xs opacity-80">impressoras</div>
+                          </div>
+                        </div>
                       </div>
                     </motion.div>
                   );
-                })}
-              </div>
-
-              <AnimatePresence>
-                {hoveredRegion && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-navy-deep text-primary-foreground px-5 py-4 rounded-xl shadow-lg border border-navy-light/20 min-w-[240px]"
-                  >
-                    <p className="font-bold text-base mb-3">{regionLayout.find((r) => r.id === hoveredRegion)?.name}</p>
-                    <div className="flex items-center gap-6 text-sm">
-                      <div className="flex items-center gap-1.5">
-                        <Users className="w-4 h-4 text-accent" />
-                        <span>{getRegionStat(hoveredRegion).volunteers} voluntários</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Printer className="w-4 h-4 text-accent" />
-                        <span>{getRegionStat(hoveredRegion).printers} impressoras</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
+                })()}
               </AnimatePresence>
             </>
           )}
         </div>
+
+        {/* Stats Grid below map */}
+        {!isLoading && (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mt-6">
+            {Object.keys(REGION_NAMES).map((regionId) => {
+              const { volunteers, printers } = getRegionStat(regionId);
+              const isHovered = hoveredRegion === regionId;
+
+              return (
+                <motion.div
+                  key={regionId}
+                  className="bg-card rounded-lg border-2 p-3 cursor-pointer text-center"
+                  style={{
+                    borderColor: isHovered ? "hsl(160 84% 39%)" : "hsl(213 52% 24% / 0.15)",
+                  }}
+                  onMouseEnter={() => setHoveredRegion(regionId)}
+                  onMouseLeave={() => setHoveredRegion(null)}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className={`text-xs font-bold mb-2 ${isHovered ? "text-accent" : "text-navy-deep"}`}>
+                    {REGION_NAMES[regionId]}
+                  </div>
+                  <div className="text-xl font-black text-foreground">{volunteers}</div>
+                  <div className="text-xs text-muted-foreground">voluntários</div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
