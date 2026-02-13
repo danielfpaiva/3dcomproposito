@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import ResourceLinks from "@/components/ResourceLinks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -309,6 +310,8 @@ const Portal = () => {
                 </div>
               )}
             </div>
+
+            <ResourceLinks className="mt-6" />
           </motion.div>
         </div>
       </div>

@@ -5,6 +5,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const PORTAL_BASE = "https://impact-print-connect.lovable.app";
+const MAKERWORLD_URL = "https://makerworld.com/en/models/2066081-3d-toddler-mobility-trainer";
+const MAKER_GUIDE_URL = "https://gbfahkeamspmzptetkqc.supabase.co/storage/v1/object/public/resources/TMT_MAKER_GUIDE_rev_A_compressed.pdf";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const FROM_EMAIL = Deno.env.get("FROM_EMAIL") ?? "PrintImpact Connect <onboarding@resend.dev>";
 
@@ -98,6 +100,12 @@ Deno.serve(async (req) => {
   <p><strong>Peça(s):</strong> ${escapeHtml(partNames.join(", "))}</p>
   <p>Aceda ao seu portal para ver detalhes e atualizar o estado:</p>
   <p><a href="${portalUrl}" style="display: inline-block; background: #0d9488; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px;">Abrir portal do voluntário</a></p>
+  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+  <p><strong>📄 Recursos para impressão:</strong></p>
+  <p>
+    <a href="${MAKER_GUIDE_URL}" style="color: #0d9488; text-decoration: underline;">Descarregar Guia do Maker (PDF)</a><br/>
+    <a href="${MAKERWORLD_URL}" style="color: #0d9488; text-decoration: underline;">Ficheiros STL no MakerWorld</a>
+  </p>
   <p style="font-size: 12px; color: #666;">Se o botão não funcionar, copie e cole no browser: ${portalUrl}</p>
   <p style="margin-top: 24px;">Obrigado,<br><strong>PrintImpact Connect</strong></p>
 </body>
