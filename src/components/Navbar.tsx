@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Printer, Menu, X, Shield, Heart, Accessibility, FileText } from "lucide-react";
+import { Printer, Menu, X, Shield, Heart, Accessibility, FileText, LogIn } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -47,6 +47,11 @@ const Navbar = () => {
               <FileText className="w-3.5 h-3.5 mr-1" /> Recursos
             </Button>
           </Link>
+          <Link to="/portal">
+            <Button variant="ghost" size="sm" className={`text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30 ${isActive("/portal") ? "text-primary-foreground bg-navy-light/20" : ""}`}>
+              <LogIn className="w-3.5 h-3.5 mr-1" /> Entrar
+            </Button>
+          </Link>
           <Link to="/contribute">
             <Button size="sm" className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
               Juntar-me à Missão
@@ -84,6 +89,11 @@ const Navbar = () => {
               <Link to="/recursos" onClick={() => setMobileOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30">
                   <FileText className="w-4 h-4 mr-2" /> Recursos
+                </Button>
+              </Link>
+              <Link to="/portal" onClick={() => setMobileOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30">
+                  <LogIn className="w-4 h-4 mr-2" /> Entrar
                 </Button>
               </Link>
               <Link to="/contribute" onClick={() => setMobileOpen(false)}>

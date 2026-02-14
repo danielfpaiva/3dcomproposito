@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Printer, MapPin, Calendar, Package, Mail, Pencil, X, Check, Loader2, AlertCircle, Star, Clock } from "lucide-react";
+import { Printer, MapPin, Calendar, Package, Mail, Pencil, X, Check, Loader2, AlertCircle, Star, Clock, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
@@ -45,6 +45,9 @@ const Portal = () => {
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [recovering, setRecovering] = useState(false);
   const [recoveryError, setRecoveryError] = useState<string | null>(null);
+  const [authStep, setAuthStep] = useState<"email" | "set-password" | "login">("email");
+  const [password, setPassword] = useState("");
+  const [contributorName, setContributorName] = useState("");
   const { toast } = useToast();
   const [assignedParts, setAssignedParts] = useState<any[]>([]);
 
@@ -123,16 +126,44 @@ const Portal = () => {
     );
   }
 
-  const handleRecovery = async () => {
+  const handleEmailCheck = async () => {
     if (!recoveryEmail.includes("@")) return;
     setRecovering(true);
     setRecoveryError(null);
-    const { data, error: err } = await supabase
-      .from("contributors").select("token").eq("email", recoveryEmail.trim().toLowerCase()).maybeSingle();
-    if (err || !data) {
-      setRecoveryError("Não encontrámos nenhum voluntário com esse email. Verifique ou inscreva-se.");
-    } else {
-      window.location.href = `/portal?token=${data.token}`;
+    try {
+      const res = await supabase.functions.invoke("contributor-auth", {
+        body: { email: recoveryEmail.trim(), action: "check" },
+      });
+      const data = res.data;
+      if (res.error || !data?.exists) {
+        setRecoveryError("Não encontrámos nenhum voluntário com esse email. Verifique ou inscreva-se.");
+      } else {
+        setContributorName(data.name || "");
+        setAuthStep(data.has_password ? "login" : "set-password");
+      }
+    } catch {
+      setRecoveryError("Erro de ligação. Tente novamente.");
+    }
+    setRecovering(false);
+  };
+
+  const handlePasswordSubmit = async () => {
+    if (!password) return;
+    setRecovering(true);
+    setRecoveryError(null);
+    const action = authStep === "set-password" ? "set-password" : "login";
+    try {
+      const res = await supabase.functions.invoke("contributor-auth", {
+        body: { email: recoveryEmail.trim(), password, action },
+      });
+      const data = res.data;
+      if (res.error || data?.error) {
+        setRecoveryError(data?.error || "Erro ao autenticar.");
+      } else if (data?.token) {
+        window.location.href = `/portal?token=${data.token}`;
+      }
+    } catch {
+      setRecoveryError("Erro de ligação. Tente novamente.");
     }
     setRecovering(false);
   };
@@ -143,28 +174,72 @@ const Portal = () => {
         <Navbar />
         <div className="pt-32 pb-20 px-6 flex items-center justify-center min-h-[70vh]">
           <div className="text-center max-w-md">
-            <Mail className="w-12 h-12 text-accent mx-auto mb-4" />
-            <h1 className="text-2xl font-black text-foreground mb-2">Aceder ao Meu Portal</h1>
-            <p className="text-muted-foreground mb-6">Introduza o email com que se inscreveu para aceder ao seu portal de voluntário.</p>
-            <div className="space-y-3 text-left">
-              <Input
-                type="email"
-                placeholder="o.seu.email@exemplo.com"
-                value={recoveryEmail}
-                onChange={(e) => setRecoveryEmail(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleRecovery()}
-                className="text-base py-5"
-              />
-              {recoveryError && (
-                <p className="text-sm text-destructive flex items-center gap-1.5">
-                  <AlertCircle className="w-4 h-4" /> {recoveryError}
+            {authStep === "email" ? (
+              <>
+                <Mail className="w-12 h-12 text-accent mx-auto mb-4" />
+                <h1 className="text-2xl font-black text-foreground mb-2">Aceder ao Meu Portal</h1>
+                <p className="text-muted-foreground mb-6">Introduza o email com que se inscreveu.</p>
+                <div className="space-y-3 text-left">
+                  <Input
+                    type="email"
+                    placeholder="o.seu.email@exemplo.com"
+                    value={recoveryEmail}
+                    onChange={(e) => setRecoveryEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleEmailCheck()}
+                    className="text-base py-5"
+                    autoFocus
+                  />
+                  {recoveryError && (
+                    <p className="text-sm text-destructive flex items-center gap-1.5">
+                      <AlertCircle className="w-4 h-4" /> {recoveryError}
+                    </p>
+                  )}
+                  <Button onClick={handleEmailCheck} disabled={recovering || !recoveryEmail.includes("@")} className="w-full bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
+                    {recovering ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                    Continuar
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Lock className="w-12 h-12 text-accent mx-auto mb-4" />
+                <h1 className="text-2xl font-black text-foreground mb-2">
+                  {authStep === "set-password" ? `Olá, ${contributorName}!` : `Bem-vindo/a, ${contributorName}!`}
+                </h1>
+                <p className="text-muted-foreground mb-6">
+                  {authStep === "set-password"
+                    ? "Defina uma password para aceder ao portal mais facilmente no futuro."
+                    : "Introduza a sua password para aceder ao portal."}
                 </p>
-              )}
-              <Button onClick={handleRecovery} disabled={recovering || !recoveryEmail.includes("@")} className="w-full bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
-                {recovering ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
-                Aceder ao Portal
-              </Button>
-            </div>
+                <div className="space-y-3 text-left">
+                  <Input
+                    type="password"
+                    placeholder={authStep === "set-password" ? "Escolha uma password" : "A sua password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
+                    className="text-base py-5"
+                    autoFocus
+                    minLength={4}
+                  />
+                  {recoveryError && (
+                    <p className="text-sm text-destructive flex items-center gap-1.5">
+                      <AlertCircle className="w-4 h-4" /> {recoveryError}
+                    </p>
+                  )}
+                  <Button onClick={handlePasswordSubmit} disabled={recovering || password.length < 4} className="w-full bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
+                    {recovering ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                    {authStep === "set-password" ? "Definir Password e Entrar" : "Entrar"}
+                  </Button>
+                  <button
+                    onClick={() => { setAuthStep("email"); setPassword(""); setRecoveryError(null); }}
+                    className="text-xs text-muted-foreground hover:text-accent transition-colors w-full text-center mt-2"
+                  >
+                    ← Voltar ao email
+                  </button>
+                </div>
+              </>
+            )}
             <p className="text-xs text-muted-foreground mt-6">
               Ainda não se inscreveu?{" "}
               <Link to="/contribute" className="text-accent hover:underline font-medium">Juntar-me à Missão</Link>
