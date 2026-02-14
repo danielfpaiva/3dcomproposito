@@ -1,0 +1,28 @@
+# Environment variables (nunca fazer commit)
+.env
+.env.local
+.env*.local
+
+# Dependencies
+node_modules
+
+# Build output (Vercel faz build próprio)
+dist
+build
+
+# Development
+.claude
+.lovable
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea
