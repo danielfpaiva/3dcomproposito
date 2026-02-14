@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { ArrowLeft, ArrowRight, Check, User, MapPin, Printer, Calendar, Mail, Package, Loader2, Star } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, User, MapPin, Printer, Calendar, Mail, Package, Loader2, Star, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ResourceLinks from "@/components/ResourceLinks";
 import { useToast } from "@/hooks/use-toast";
@@ -87,6 +87,9 @@ const Contribute = () => {
   const [submitted, setSubmitted] = useState(false);
   const [portalLink, setPortalLink] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [settingPassword, setSettingPassword] = useState(false);
+  const [passwordSet, setPasswordSet] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -168,6 +171,25 @@ const Contribute = () => {
     exit: { opacity: 0, x: -30 },
   };
 
+  const handleSetPassword = async () => {
+    if (newPassword.length < 4) return;
+    setSettingPassword(true);
+    try {
+      const res = await supabase.functions.invoke("contributor-auth", {
+        body: { email: formData.email.trim(), password: newPassword, action: "set-password" },
+      });
+      if (res.error || res.data?.error) {
+        toast({ title: "Erro", description: res.data?.error || "Não foi possível guardar a password.", variant: "destructive" });
+      } else {
+        setPasswordSet(true);
+        toast({ title: "Password definida!", description: "Pode agora entrar no portal com o seu email e password." });
+      }
+    } catch {
+      toast({ title: "Erro de ligação", description: "Tente novamente.", variant: "destructive" });
+    }
+    setSettingPassword(false);
+  };
+
   if (submitted) {
     return (
       <div className="min-h-screen bg-background">
@@ -184,6 +206,45 @@ const Contribute = () => {
               <p className="text-xs text-muted-foreground mb-1">O Seu Link do Portal</p>
               <p className="text-sm font-mono text-accent break-all">{portalLink}</p>
             </div>
+
+            {!passwordSet ? (
+              <div className="bg-card border border-border rounded-xl p-4 mb-6 text-left">
+                <div className="flex items-center gap-2 mb-2">
+                  <Lock className="w-4 h-4 text-accent" />
+                  <p className="text-sm font-bold text-foreground">Criar password de acesso</p>
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Defina uma password para aceder ao portal sem precisar do link. Pode sempre entrar em <span className="font-medium text-foreground">/portal</span> com o seu email.
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    type="password"
+                    placeholder="Escolha uma password (mín. 4 caracteres)"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSetPassword()}
+                    className="text-sm"
+                    minLength={4}
+                  />
+                  <Button
+                    onClick={handleSetPassword}
+                    disabled={settingPassword || newPassword.length < 4}
+                    size="sm"
+                    className="bg-accent text-accent-foreground hover:bg-emerald-light font-semibold shrink-0"
+                  >
+                    {settingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar"}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-accent/5 border border-accent/20 rounded-xl p-4 mb-6 flex items-center gap-3">
+                <Check className="w-5 h-5 text-accent shrink-0" />
+                <p className="text-sm text-foreground">
+                  Password definida! Pode aceder ao portal com <span className="font-semibold">{formData.email}</span> e a sua password.
+                </p>
+              </div>
+            )}
+
             <a href={portalLink}>
               <Button className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
                 Ir para o Meu Portal

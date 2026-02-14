@@ -1,1 +1,4 @@
 project_id = "gbfahkeamspmzptetkqc"
+
+[functions.contributor-auth]
+verify_jwt = false
