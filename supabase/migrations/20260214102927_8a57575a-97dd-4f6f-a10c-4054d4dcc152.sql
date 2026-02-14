@@ -1,0 +1,1 @@
+ALTER TABLE public.contributors ADD COLUMN password_hash text DEFAULT NULL;

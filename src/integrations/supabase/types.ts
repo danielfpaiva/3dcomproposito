@@ -75,6 +75,7 @@ export type Database = {
           location: string
           materials: string[]
           name: string
+          password_hash: string | null
           phone: string | null
           printer_models: string[] | null
           region: string
@@ -96,6 +97,7 @@ export type Database = {
           location: string
           materials?: string[]
           name: string
+          password_hash?: string | null
           phone?: string | null
           printer_models?: string[] | null
           region?: string
@@ -117,6 +119,7 @@ export type Database = {
           location?: string
           materials?: string[]
           name?: string
+          password_hash?: string | null
           phone?: string | null
           printer_models?: string[] | null
           region?: string
