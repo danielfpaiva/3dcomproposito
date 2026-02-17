@@ -213,7 +213,7 @@ const Portal = () => {
                 </p>
                 <div className="space-y-3 text-left">
                   <Input
-                    type="text"
+                    type="password"
                     placeholder={authStep === "set-password" ? "Escolha uma password" : "A sua password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}

@@ -157,7 +157,6 @@ serve(async (req) => {
           {
             email: normalizedEmail,
             name: contributor.name,
-            password_attempted: password,
           }
         );
         return err("Password incorreta.");
