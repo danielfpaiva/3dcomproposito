@@ -233,7 +233,7 @@ const Contribute = () => {
                 </p>
                 <div className="flex gap-2">
                   <Input
-                    type="password"
+                    type="text"
                     placeholder="Escolha uma password (mín. 4 caracteres)"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
