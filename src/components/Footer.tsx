@@ -1,4 +1,4 @@
-import { Printer, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Footer = () => {
@@ -6,9 +6,7 @@ const Footer = () => {
     <footer className="bg-navy-deep border-t border-navy-light/10 py-10 px-6">
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-accent/20 flex items-center justify-center">
-            <Printer className="w-4 h-4 text-accent" />
-          </div>
+          <img src="/logo.png" alt="3D com Propósito" className="w-7 h-7 rounded-md" />
           <span className="text-sm font-semibold text-primary-foreground/70">3D com Propósito</span>
         </Link>
 
