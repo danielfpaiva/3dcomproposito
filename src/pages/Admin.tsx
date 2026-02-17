@@ -33,7 +33,7 @@ import AddContributorDialog from "@/components/admin/AddContributorDialog";
 import ContributorsFilters from "@/components/admin/ContributorsFilters";
 import AllocateVolunteerDialog from "@/components/admin/AllocateVolunteerDialog";
 
-const PORTAL_BASE = "https://impact-print-connect.lovable.app";
+const PORTAL_BASE = "https://www.3dcomproposito.pt";
 
 const Admin = () => {
   const { user, loading: authLoading, signOut } = useAuth();

@@ -23,7 +23,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, UserPlus, Copy, Mail, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-const PORTAL_BASE = "https://impact-print-connect.lovable.app";
+const PORTAL_BASE = "https://www.3dcomproposito.pt";
 
 interface Contributor {
   id: string;
