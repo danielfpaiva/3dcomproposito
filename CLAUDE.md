@@ -231,7 +231,7 @@ Contributors and beneficiary requests are tagged by region for geographic matchi
 
 1. User fills out `/contribute` form (8 steps: name, location, printer, materials, experience, availability, shipping, email)
 2. Backend inserts into `contributors` table with generated `token`
-3. User receives portal link: `https://impact-print-connect.lovable.app/portal?token=<uuid>`
+3. User receives portal link: `https://www.3dcomproposito.pt/portal?token=<uuid>`
 4. Admin allocates a part to this volunteer
 5. Volunteer visits portal to:
    - See assigned parts with status
@@ -307,11 +307,11 @@ VITE_PAYPAL_LINK=https://paypal.me/...
 
 ## Deployment
 
-This project is deployed on the Lovable platform:
+This project is deployed on Vercel:
 - Pushing to git automatically triggers deployment
 - Build command: `npm run build`
 - Dev server runs on port 8080
-- Visit Lovable dashboard to publish changes
+- Custom domain: https://www.3dcomproposito.pt
 
 ## Important Notes
 

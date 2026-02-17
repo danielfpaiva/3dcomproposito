@@ -1,58 +1,10 @@
-# Welcome to your Lovable project
+# PrintImpact Connect
 
-## Project info
+Aplicação web que coordena voluntários com impressoras 3D para fabricar peças de cadeiras de rodas para crianças em Portugal.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+**URL**: https://www.3dcomproposito.pt
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
+## Tech Stack
 
 - Vite
 - TypeScript
@@ -60,23 +12,33 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## Notifying volunteers when they’re allocated a part
+## Como correr localmente
 
-The app does **not** use an email API (no Resend or other provider required). After you allocate a part to a volunteer:
+```sh
+# Clonar o repositório
+git clone <YOUR_GIT_URL>
 
-- **From the allocation dialog:** After clicking “Atribuir”, the dialog shows the volunteer’s **portal link**. Use **“Copiar link”** to copy it and **“Abrir email”** to open your default email client with a pre-filled message to the volunteer (you can edit and send).
-- **From the contributors list:** Each row has a **link icon** (🔗). Click it to copy that volunteer’s portal link so you can paste it into an email, WhatsApp, etc.
+# Entrar na pasta do projeto
+cd <YOUR_PROJECT_NAME>
 
-Portal link format: **https://impact-print-connect.lovable.app/portal?token=...**
+# Instalar dependências
+npm i
 
-## How can I deploy this project?
+# Iniciar servidor de desenvolvimento
+npm run dev
+```
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Notificar voluntários quando lhes é atribuída uma peça
 
-## Can I connect a custom domain to my Lovable project?
+A app **não** usa uma API de email. Após atribuires uma peça a um voluntário:
 
-Yes, you can!
+- **No diálogo de alocação:** Após clicar em "Atribuir", o diálogo mostra o **link do portal** do voluntário. Usa **"Copiar link"** para copiar e **"Abrir email"** para abrir o cliente de email com uma mensagem pré-preenchida.
+- **Na lista de contribuidores:** Cada linha tem um **ícone de link** (🔗). Clica para copiar o link do portal desse voluntário.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Formato do link do portal: **https://www.3dcomproposito.pt/portal?token=...**
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Deploy
+
+O projeto está deployed no Vercel. Push para o repositório despoleta deploy automático.
+
+- Domínio: https://www.3dcomproposito.pt
