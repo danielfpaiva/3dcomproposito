@@ -40,6 +40,11 @@ const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
+  };
+
   const copyPortalLink = async (token: string) => {
     const url = `${PORTAL_BASE}/portal?token=${encodeURIComponent(token)}`;
     try {
@@ -277,7 +282,7 @@ const Admin = () => {
             </div>
             <span className="text-sm font-bold text-primary-foreground">Centro de Comando</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={signOut} className="text-primary-foreground/60 hover:text-primary-foreground hover:bg-navy-light/30">
+          <Button variant="ghost" size="sm" onClick={handleLogout} className="text-primary-foreground/60 hover:text-primary-foreground hover:bg-navy-light/30">
             <LogOut className="w-4 h-4 mr-1" /> Sair
           </Button>
         </div>
