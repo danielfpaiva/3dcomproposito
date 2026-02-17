@@ -1,14 +1,14 @@
 // Notify a contributor by email when they are allocated part(s).
 // Uses Resend. Requires RESEND_API_KEY and optional FROM_EMAIL in Supabase Edge Function secrets.
-// Portal link uses: https://impact-print-connect.lovable.app
+// Portal link uses: https://3dcomproposito.vercel.app
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const PORTAL_BASE = "https://impact-print-connect.lovable.app";
+const PORTAL_BASE = "https://3dcomproposito.vercel.app";
 const MAKERWORLD_URL = "https://makerworld.com/en/models/2066081-3d-toddler-mobility-trainer";
-const MAKER_GUIDE_URL = "https://gbfahkeamspmzptetkqc.supabase.co/storage/v1/object/public/resources/TMT_MAKER_GUIDE_rev_A_compressed.pdf";
+const MAKER_GUIDE_URL = "https://bsbqmqfznkozqagdhvoj.supabase.co/storage/v1/object/public/resources/TMT_MAKER_GUIDE_rev_A_compressed.pdf";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const FROM_EMAIL = Deno.env.get("FROM_EMAIL") ?? "PrintImpact Connect <onboarding@resend.dev>";
+const FROM_EMAIL = Deno.env.get("FROM_EMAIL") ?? "3D com Propósito <onboarding@resend.dev>";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -86,8 +86,8 @@ Deno.serve(async (req) => {
   const portalUrl = `${PORTAL_BASE}/portal?token=${encodeURIComponent(contributor.token)}`;
 
   const subject = partNames.length === 1
-    ? `Foi-lhe atribuída uma peça — PrintImpact Connect`
-    : `Foram-lhe atribuídas ${partNames.length} peças — PrintImpact Connect`;
+    ? `Foi-lhe atribuída uma peça — 3D com Propósito`
+    : `Foram-lhe atribuídas ${partNames.length} peças — 3D com Propósito`;
 
   const html = `
 <!DOCTYPE html>
@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
     <a href="${MAKERWORLD_URL}" style="color: #0d9488; text-decoration: underline;">Ficheiros STL no MakerWorld</a>
   </p>
   <p style="font-size: 12px; color: #666;">Se o botão não funcionar, copie e cole no browser: ${portalUrl}</p>
-  <p style="margin-top: 24px;">Obrigado,<br><strong>PrintImpact Connect</strong></p>
+  <p style="margin-top: 24px;">Obrigado,<br><strong>3D com Propósito</strong></p>
 </body>
 </html>
 `;
