@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Printer, Menu, X, Shield, Heart, Accessibility, FileText, LogIn } from "lucide-react";
+import { Menu, X, Shield, Heart, Accessibility, FileText, LogIn } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -13,9 +13,7 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-navy-deep/95 backdrop-blur-md border-b border-navy-light/20">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-            <Printer className="w-5 h-5 text-accent-foreground" />
-          </div>
+          <img src="/logo.png" alt="3D com Propósito" className="w-9 h-9 rounded-lg group-hover:scale-105 transition-transform duration-200" />
           <span className="text-lg font-bold text-primary-foreground tracking-tight">
             3D com <span className="text-accent font-medium">Propósito</span>
           </span>
