@@ -1,8 +1,9 @@
 # 📧 Plano de Implementação de Emails - 3D com Propósito
 
 > **Data da análise**: 2026-02-17
+> **Última atualização**: 2026-02-17
 > **Estado do Resend**: ✅ Configurado (API Key, domínio verificado)
-> **Estado da Edge Function**: ⚠️ Código atualizado mas **NÃO DEPLOYADA** no Supabase
+> **Estado do Welcome Email**: ✅ **IMPLEMENTADO E DEPLOYADO**
 
 ---
 
@@ -11,46 +12,57 @@
 ### 1️⃣ **REGISTO DE VOLUNTÁRIO** (`src/pages/Contribute.tsx`)
 
 **Quando**: Após voluntário submeter formulário de registo
-**Localização**: Linha 135-164
-**Estado atual**: ❌ **Sem email automático**
+**Localização**: Linha 135-172 (atualizado)
+**Estado atual**: ✅ **IMPLEMENTADO E FUNCIONANDO**
 
-#### Email a enviar:
+#### ✅ **Email implementado:**
 - **Para**: Email do voluntário
 - **Assunto**: `"Bem-vindo ao 3D com Propósito! 🎉"`
+- **Edge Function**: `volunteer-welcome` (deployada)
 - **Conteúdo**:
-  - Mensagem de boas-vindas personalizada
+  - Logo "3D com Propósito" (sem fundo)
+  - Mensagem de boas-vindas à "missão"
   - Link do portal com token único
-  - Guia rápido (próximos passos)
-  - Links para recursos (Guia do Maker PDF, MakerWorld STLs)
-  - Informação sobre como definir password
+  - Próximos passos (lista de 4 itens)
+  - Design profissional (cabeçalho branco com borda verde)
 
-**Código atual**:
+**Código implementado**:
 ```typescript
-// src/pages/Contribute.tsx - linha 135-164
-const { data, error } = await supabase
-  .from("contributors")
-  .insert({
-    name: formData.name.trim(),
-    email: formData.email.trim(),
-    // ... outros campos
-  })
-  .select("token")
-  .single();
+// src/pages/Contribute.tsx - linha 135-178
+const { data, error } = await supabase.from("contributors").insert({
+  name: formData.name.trim(),
+  email: formData.email.trim(),
+  // ... outros campos
+}).select("id, token").single();
 
 if (error) {
   toast({ title: "Erro ao submeter", description: error.message, variant: "destructive" });
   return;
 }
 
-// ✅ AQUI: Enviar email de boas-vindas
+// ✅ Enviar email de boas-vindas
+try {
+  const { error: emailError } = await supabase.functions.invoke('volunteer-welcome', {
+    body: { contributor_id: data.id }
+  });
+
+  if (emailError) {
+    console.error('Erro ao enviar email de boas-vindas:', emailError);
+    // Não bloquear o registo se o email falhar
+  }
+} catch (e) {
+  console.error('Erro ao enviar email de boas-vindas:', e);
+}
+
 setPortalLink(`${window.location.origin}/portal?token=${data.token}`);
 setSubmitted(true);
 ```
 
-**Implementação necessária**:
-- Criar Edge Function: `volunteer-welcome`
-- Chamar após `insert` bem-sucedido
-- Template HTML com design consistente
+**Status**: ✅ **COMPLETO**
+- Edge function criada e deployada
+- Integração no formulário funcionando
+- Email genérico (sem recursos específicos de projeto)
+- Logo sem fundo implementado
 
 ---
 
@@ -289,25 +301,25 @@ const handleSave = async () => {
 
 ---
 
-### **FASE 2: Email de Boas-Vindas a Voluntários** 🎉
+### **FASE 2: Email de Boas-Vindas a Voluntários** 🎉 ✅ **COMPLETO**
 
 **Objetivo**: Enviar email automático quando voluntário se regista
 
 **Tarefas**:
-1. ⏳ **Criar edge function `volunteer-welcome`**:
+1. ✅ **Criar edge function `volunteer-welcome`**:
    - Copiar estrutura de `notify-part-allocated`
    - Adaptar template HTML
    - Incluir link do portal com token
-   - Incluir links para recursos
-2. ⏳ **Deploy no Supabase**
-3. ⏳ **Integrar em Contribute.tsx**:
+   - Email genérico (sem recursos específicos de projeto)
+2. ✅ **Deploy no Supabase**
+3. ✅ **Integrar em Contribute.tsx**:
    - Chamar edge function após criar contributor
    - Passar: email, nome, token
-4. ⏳ **Testar**:
+4. ✅ **Testar**:
    - Registar voluntário de teste
    - Verificar email recebido
 
-**Tempo estimado**: 1 hora
+**Status**: ✅ **IMPLEMENTADO E DEPLOYADO**
 
 **Template sugerido**:
 ```html
@@ -576,12 +588,12 @@ Auto-configurados pelo Supabase:
 - [ ] Verificar logs no Resend Dashboard
 - [ ] Commit e push das alterações
 
-### Fase 2: Email de Boas-Vindas
-- [ ] Criar edge function `volunteer-welcome`
-- [ ] Deploy no Supabase
-- [ ] Integrar em `Contribute.tsx`
-- [ ] Testar registo de voluntário
-- [ ] Commit e push
+### Fase 2: Email de Boas-Vindas ✅ **COMPLETO**
+- [x] Criar edge function `volunteer-welcome`
+- [x] Deploy no Supabase
+- [x] Integrar em `Contribute.tsx`
+- [x] Testar registo de voluntário
+- [x] Commit e push
 
 ### Fase 3: Email de Confirmação Beneficiário
 - [ ] Criar edge function `beneficiary-confirmation`
