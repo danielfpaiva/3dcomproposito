@@ -79,6 +79,31 @@ The app has 7 main routes defined in [src/App.tsx](src/App.tsx):
 - Admin tables: protected by `is_organizer()` function checking user_roles
 - Parts/projects: require organizer role
 
+### 🚨 IMPORTANT: Database Schema Changes
+
+**⚠️ MANDATORY PROCESS** for ANY database structure changes:
+
+When adding/removing/altering tables, columns, constraints, indexes, views, RLS policies, triggers, functions, or enums:
+
+1. **MUST follow**: [backup/docs/guides/DATABASE_CHANGES_WORKFLOW.md](backup/docs/guides/DATABASE_CHANGES_WORKFLOW.md)
+2. **MUST update**: `backup/database/schema/schema.sql` (current schema)
+3. **MUST update**: `src/integrations/supabase/types.ts` (TypeScript types)
+4. **MUST update**: This file (CLAUDE.md) if structure changed
+5. **MUST test**: `npm run build` (TypeScript compilation)
+6. **MUST commit**: All changes together with descriptive message
+
+**Quick export schema:**
+```bash
+./backup/scripts/export_schema.sh "description of change"
+```
+
+**Schema documentation location:**
+- Current schema: [backup/database/schema/schema.sql](backup/database/schema/schema.sql)
+- Migrations: [backup/database/schema/migrations/](backup/database/schema/migrations/)
+- Archived schemas: [backup/database/schema/archive/](backup/database/schema/archive/)
+
+**Never skip this process!** Database and code must stay in sync for scalability.
+
 ### State Management Pattern
 
 React Query handles all server state. Pattern used throughout the app:

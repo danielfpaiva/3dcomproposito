@@ -1,0 +1,9 @@
+# Dados sensíveis - NUNCA commitar
+# Contêm informação pessoal de voluntários e beneficiários (RGPD)
+
+**/*.csv
+**/*.json
+**/*.xlsx
+
+# Exceção: README files
+!**/README.md
