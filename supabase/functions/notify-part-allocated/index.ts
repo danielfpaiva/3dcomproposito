@@ -1,10 +1,10 @@
 // Notify a contributor by email when they are allocated part(s).
 // Uses Resend. Requires RESEND_API_KEY and optional FROM_EMAIL in Supabase Edge Function secrets.
-// Portal link uses: https://3dcomproposito.vercel.app
+// Portal link uses: https://www.3dcomproposito.pt
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const PORTAL_BASE = "https://3dcomproposito.vercel.app";
+const PORTAL_BASE = "https://www.3dcomproposito.pt";
 const MAKERWORLD_URL = "https://makerworld.com/en/models/2066081-3d-toddler-mobility-trainer";
 const MAKER_GUIDE_URL = "https://bsbqmqfznkozqagdhvoj.supabase.co/storage/v1/object/public/resources/TMT_MAKER_GUIDE_rev_A_compressed.pdf";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");

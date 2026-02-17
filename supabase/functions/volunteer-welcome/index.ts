@@ -3,8 +3,8 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const PORTAL_BASE = "https://3dcomproposito.vercel.app";
-const LOGO_URL = "https://3dcomproposito.vercel.app/3D_com_Prop%C3%B3sito-sem-fundo.png";
+const PORTAL_BASE = "https://www.3dcomproposito.pt";
+const LOGO_URL = "https://www.3dcomproposito.pt/3D_com_Prop%C3%B3sito-sem-fundo.png";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const FROM_EMAIL = Deno.env.get("FROM_EMAIL") ?? "3D com Propósito <onboarding@resend.dev>";
 
