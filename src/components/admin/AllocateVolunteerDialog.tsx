@@ -114,12 +114,11 @@ const AllocateVolunteerDialog = ({
   const clearSelection = () => setSelectedPartIds(new Set());
 
   const handleOpenChange = (next: boolean) => {
-    if (!next) {
-      setSelectedProjectId(null);
-      setSelectedPartIds(new Set());
-      setAllocated(false);
-      setCopied(false);
-    }
+    // Reset state both on open and close
+    setSelectedProjectId(null);
+    setSelectedPartIds(new Set());
+    setAllocated(false);
+    setCopied(false);
     onOpenChange(next);
   };
 
