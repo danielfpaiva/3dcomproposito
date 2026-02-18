@@ -81,10 +81,23 @@ const ProjectPartsList = ({ parts, contributors }: ProjectPartsListProps) => {
       queryClient.invalidateQueries({ queryKey: ["admin-parts"] });
       const contributorId = updates.assigned_contributor_id as string | null | undefined;
       if (contributorId) {
-        toast({
-          title: "Voluntário atribuído",
-          description: "Copie o link do portal na lista de voluntários (ícone de link) e envie ao voluntário.",
+        // Send email notification
+        const { error: emailError } = await supabase.functions.invoke("notify-part-allocated", {
+          body: { contributor_id: contributorId, part_ids: [partId] },
+          headers: {
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
         });
+        if (emailError) {
+          console.error("notify-part-allocated error:", emailError);
+          toast({
+            title: "Aviso",
+            description: "Voluntário atribuído mas o email não foi enviado: " + emailError.message,
+            variant: "destructive",
+          });
+        } else {
+          toast({ title: "Voluntário atribuído", description: "Email de notificação enviado ao voluntário." });
+        }
       }
     }
     setUpdatingId(null);
