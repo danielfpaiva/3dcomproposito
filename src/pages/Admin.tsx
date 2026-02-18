@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Printer, Users, Target, LogOut, Plus, Loader2,
   BarChart3, Package, Armchair, ChevronLeft, Heart, Accessibility, UserPlus, Link2, Eye,
-  ArrowUpDown, ChevronUp, ChevronDown,
+  ArrowUpDown, ChevronUp, ChevronDown, Layers,
 } from "lucide-react";
 import {
   Dialog,
@@ -32,6 +32,7 @@ import ProjectPartsList from "@/components/admin/ProjectPartsList";
 import AddContributorDialog from "@/components/admin/AddContributorDialog";
 import ContributorsFilters from "@/components/admin/ContributorsFilters";
 import AllocateVolunteerDialog from "@/components/admin/AllocateVolunteerDialog";
+import InitiativesList from "@/components/admin/InitiativesList";
 
 const PORTAL_BASE = "https://www.3dcomproposito.pt";
 
@@ -56,7 +57,7 @@ const Admin = () => {
   };
   const queryClient = useQueryClient();
   const { data: stats } = useDashboardStats();
-  const [activeTab, setActiveTab] = useState<"overview" | "contributors" | "projects" | "requests" | "donations">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "contributors" | "projects" | "requests" | "donations" | "initiatives">("overview");
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [filterSearch, setFilterSearch] = useState("");
   const [filterRegion, setFilterRegion] = useState("all");
@@ -262,6 +263,7 @@ const Admin = () => {
     { id: "overview" as const, label: "Visão Geral", icon: BarChart3 },
     { id: "contributors" as const, label: "Voluntários", icon: Users },
     { id: "projects" as const, label: "Projetos", icon: Armchair },
+    { id: "initiatives" as const, label: "Iniciativas", icon: Layers },
     { id: "requests" as const, label: "Pedidos", icon: Accessibility },
     { id: "donations" as const, label: "Donativos", icon: Heart },
   ];
@@ -823,6 +825,13 @@ const Admin = () => {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Initiatives Tab */}
+          {activeTab === "initiatives" && (
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+              <InitiativesList />
             </div>
           )}
         </div>

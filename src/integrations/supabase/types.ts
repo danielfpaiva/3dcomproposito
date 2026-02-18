@@ -62,6 +62,159 @@ export type Database = {
         }
         Relationships: []
       }
+      initiatives: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      initiative_parts: {
+        Row: {
+          id: string
+          initiative_id: string
+          part_name: string
+          category: string | null
+          material: string | null
+          file_url: string | null
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          initiative_id: string
+          part_name: string
+          category?: string | null
+          material?: string | null
+          file_url?: string | null
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          initiative_id?: string
+          part_name?: string
+          category?: string | null
+          material?: string | null
+          file_url?: string | null
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "initiative_parts_initiative_id_fkey"
+            columns: ["initiative_id"]
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      project_instances: {
+        Row: {
+          id: string
+          initiative_id: string
+          name: string
+          status: Database["public"]["Enums"]["project_status"]
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          initiative_id: string
+          name: string
+          status?: Database["public"]["Enums"]["project_status"]
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          initiative_id?: string
+          name?: string
+          status?: Database["public"]["Enums"]["project_status"]
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_instances_initiative_id_fkey"
+            columns: ["initiative_id"]
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      project_instance_parts: {
+        Row: {
+          id: string
+          project_instance_id: string
+          initiative_part_id: string | null
+          part_name: string
+          category: string | null
+          material: string | null
+          file_url: string | null
+          status: Database["public"]["Enums"]["part_status"]
+          assigned_contributor_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          project_instance_id: string
+          initiative_part_id?: string | null
+          part_name: string
+          category?: string | null
+          material?: string | null
+          file_url?: string | null
+          status?: Database["public"]["Enums"]["part_status"]
+          assigned_contributor_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          project_instance_id?: string
+          initiative_part_id?: string | null
+          part_name?: string
+          category?: string | null
+          material?: string | null
+          file_url?: string | null
+          status?: Database["public"]["Enums"]["part_status"]
+          assigned_contributor_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_instance_parts_project_instance_id_fkey"
+            columns: ["project_instance_id"]
+            referencedRelation: "project_instances"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       contributors: {
         Row: {
           availability: string
