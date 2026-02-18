@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Printer, MapPin, Calendar, Package, Mail, Pencil, X, Check, Loader2, AlertCircle, Star, Clock, Lock } from "lucide-react";
+import { Printer, MapPin, Calendar, Package, Mail, Pencil, X, Check, Loader2, AlertCircle, Star, Clock, Lock, Download } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
@@ -362,7 +362,7 @@ const Portal = () => {
               ) : (
                 <div className="space-y-3">
                   {assignedParts.map((part) => (
-                    <div key={part.id} className="p-3 bg-muted/30 rounded-xl space-y-1">
+                    <div key={part.id} className="p-3 bg-muted/30 rounded-xl space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-foreground">{part.part_name}</span>
                         <Badge className={statusColor[part.status] ?? ""}>
@@ -380,6 +380,17 @@ const Portal = () => {
                           <span>· {part.category}</span>
                         )}
                       </div>
+                      {part.file_url && (
+                        <a
+                          href={part.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          Descarregar ficheiro para impressão
+                        </a>
+                      )}
                     </div>
                   ))}
                 </div>
