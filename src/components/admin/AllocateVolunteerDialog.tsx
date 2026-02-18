@@ -175,6 +175,9 @@ const AllocateVolunteerDialog = ({
     // Send email notification
     const { error: emailError } = await supabase.functions.invoke("notify-part-allocated", {
       body: { contributor_id: contributor.id, part_ids: partIds },
+      headers: {
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
     });
     if (emailError) {
       console.error("notify-part-allocated error:", emailError);
