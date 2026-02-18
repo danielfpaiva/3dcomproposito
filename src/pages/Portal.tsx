@@ -50,6 +50,7 @@ const Portal = () => {
   const [contributorName, setContributorName] = useState("");
   const { toast } = useToast();
   const [assignedParts, setAssignedParts] = useState<any[]>([]);
+  const [updatingPartId, setUpdatingPartId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) {
@@ -116,6 +117,25 @@ const Portal = () => {
     }
     setEditingField(null);
     setSaving(false);
+  };
+
+  const updatePartStatus = async (partId: string, newStatus: string) => {
+    if (!contributor) return;
+    setUpdatingPartId(partId);
+    const { error: err } = await supabase
+      .from("parts")
+      .update({ status: newStatus })
+      .eq("id", partId)
+      .eq("assigned_contributor_id", contributor.id);
+    if (err) {
+      toast({ title: "Erro ao atualizar estado", description: err.message, variant: "destructive" });
+    } else {
+      setAssignedParts((prev) =>
+        prev.map((p) => (p.id === partId ? { ...p, status: newStatus } : p))
+      );
+      toast({ title: "Estado atualizado!", description: statusLabels[newStatus] });
+    }
+    setUpdatingPartId(null);
   };
 
   if (loading) {
@@ -390,6 +410,41 @@ const Portal = () => {
                           <Download className="w-3.5 h-3.5" />
                           Descarregar ficheiro para impressão
                         </a>
+                      )}
+                      {["assigned", "printing", "printed", "shipped"].includes(part.status) && (
+                        <div className="flex items-center gap-2 pt-1 flex-wrap">
+                          <span className="text-xs text-muted-foreground">Atualizar estado:</span>
+                          {updatingPartId === part.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+                          ) : (
+                            <>
+                              {part.status !== "printing" && (
+                                <button
+                                  onClick={() => updatePartStatus(part.id, "printing")}
+                                  className="text-xs px-2 py-0.5 rounded-full border border-accent text-accent hover:bg-accent/10 transition-colors"
+                                >
+                                  A imprimir
+                                </button>
+                              )}
+                              {part.status !== "printed" && (
+                                <button
+                                  onClick={() => updatePartStatus(part.id, "printed")}
+                                  className="text-xs px-2 py-0.5 rounded-full border border-success text-success hover:bg-success/10 transition-colors"
+                                >
+                                  Impresso
+                                </button>
+                              )}
+                              {part.status !== "shipped" && (
+                                <button
+                                  onClick={() => updatePartStatus(part.id, "shipped")}
+                                  className="text-xs px-2 py-0.5 rounded-full border border-primary text-primary hover:bg-primary/10 transition-colors"
+                                >
+                                  Enviado
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
                       )}
                     </div>
                   ))}

@@ -17,9 +17,10 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TYPE part_status AS ENUM (
     'unassigned',
     'assigned',
-    'in_progress',
-    'completed',
-    'delivered'
+    'printing',
+    'printed',
+    'shipped',
+    'complete'
 );
 
 CREATE TYPE project_status AS ENUM (
@@ -178,9 +179,9 @@ SELECT
     (SELECT COUNT(*) FROM contributors) as total_contributors,
     (SELECT COUNT(*) FROM wheelchair_projects) as total_projects,
     (SELECT COUNT(*) FROM parts) as total_parts,
-    (SELECT COUNT(*) FROM parts WHERE status = 'completed') as parts_completed,
-    (SELECT COUNT(*) FROM parts WHERE status = 'in_progress') as parts_in_progress,
-    (SELECT COUNT(*) FROM wheelchair_projects WHERE status = 'completed') as wheelchairs_completed,
+    (SELECT COUNT(*) FROM parts WHERE status = 'printed') as parts_completed,
+    (SELECT COUNT(*) FROM parts WHERE status = 'printing') as parts_in_progress,
+    (SELECT COUNT(*) FROM wheelchair_projects WHERE status = 'in_progress') as wheelchairs_completed,
     (SELECT COUNT(*) FROM donations) as total_donations,
     (SELECT COALESCE(SUM(amount_cents), 0) FROM donations) as total_donated_cents;
 
