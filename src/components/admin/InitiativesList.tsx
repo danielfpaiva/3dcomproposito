@@ -62,10 +62,13 @@ const InitiativesList = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("initiatives")
-        .select("*")
+        .select(`
+          *,
+          initiative_parts(count)
+        `)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as Initiative[];
+      return data as (Initiative & { initiative_parts: { count: number }[] })[];
     },
   });
 
@@ -543,6 +546,9 @@ const InitiativesList = () => {
                 ) : (
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-sm truncate">{initiative.name}</span>
+                    <Badge variant="outline" className="text-[10px] font-normal">
+                      {initiative.initiative_parts?.[0]?.count ?? 0} {(initiative.initiative_parts?.[0]?.count ?? 0) === 1 ? 'peça' : 'peças'}
+                    </Badge>
                     {!initiative.is_active && <Badge variant="secondary" className="text-[10px]">Inativa</Badge>}
                   </div>
                 )}
