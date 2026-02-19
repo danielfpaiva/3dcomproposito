@@ -117,6 +117,52 @@ CREATE TABLE part_templates (
     sort_order integer DEFAULT 0 NOT NULL
 );
 
+-- Initiative template system tables
+CREATE TABLE initiatives (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    name text NOT NULL,
+    description text,
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE initiative_parts (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    initiative_id uuid NOT NULL REFERENCES initiatives(id) ON DELETE CASCADE,
+    part_name text NOT NULL,
+    category text,
+    material text,
+    file_url text,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE project_instances (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    initiative_id uuid NOT NULL REFERENCES initiatives(id),
+    request_id uuid REFERENCES beneficiary_requests(id) ON DELETE SET NULL,
+    name text NOT NULL,
+    status project_status DEFAULT 'planning' NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE project_instance_parts (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_instance_id uuid NOT NULL REFERENCES project_instances(id) ON DELETE CASCADE,
+    initiative_part_id uuid REFERENCES initiative_parts(id) ON DELETE SET NULL,
+    part_name text NOT NULL,
+    category text,
+    material text,
+    file_url text,
+    status part_status DEFAULT 'unassigned' NOT NULL,
+    assigned_contributor_id uuid REFERENCES contributors(id) ON DELETE SET NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
 -- Beneficiary requests table
 CREATE TABLE beneficiary_requests (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

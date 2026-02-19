@@ -33,6 +33,8 @@ import AddContributorDialog from "@/components/admin/AddContributorDialog";
 import ContributorsFilters from "@/components/admin/ContributorsFilters";
 import AllocateVolunteerDialog from "@/components/admin/AllocateVolunteerDialog";
 import InitiativesList from "@/components/admin/InitiativesList";
+import ProjectInstancesList from "@/components/admin/ProjectInstancesList";
+import BeneficiaryRequestsList from "@/components/admin/BeneficiaryRequestsList";
 
 const PORTAL_BASE = "https://www.3dcomproposito.pt";
 
@@ -57,7 +59,7 @@ const Admin = () => {
   };
   const queryClient = useQueryClient();
   const { data: stats } = useDashboardStats();
-  const [activeTab, setActiveTab] = useState<"overview" | "contributors" | "projects" | "requests" | "donations" | "initiatives">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "contributors" | "projects" | "project-instances" | "requests" | "donations" | "initiatives">("overview");
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [filterSearch, setFilterSearch] = useState("");
   const [filterRegion, setFilterRegion] = useState("all");
@@ -262,8 +264,9 @@ const Admin = () => {
   const tabs = [
     { id: "overview" as const, label: "Visão Geral", icon: BarChart3 },
     { id: "contributors" as const, label: "Voluntários", icon: Users },
-    { id: "projects" as const, label: "Projetos", icon: Armchair },
+    { id: "project-instances" as const, label: "Projetos", icon: Package },
     { id: "initiatives" as const, label: "Iniciativas", icon: Layers },
+    { id: "projects" as const, label: "Projetos (antigo)", icon: Armchair },
     { id: "requests" as const, label: "Pedidos", icon: Accessibility },
     { id: "donations" as const, label: "Donativos", icon: Heart },
   ];
@@ -646,64 +649,7 @@ const Admin = () => {
           )}
 
           {activeTab === "requests" && (
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Pedidos de Beneficiários ({beneficiaryRequests.length})</h3>
-              {requestsLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
-              ) : beneficiaryRequests.length === 0 ? (
-                <div className="bg-card rounded-2xl border border-border p-12 text-center">
-                  <Accessibility className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">Ainda sem pedidos de ajuda.</p>
-                </div>
-              ) : (
-                <div className="bg-card rounded-2xl border border-border overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-border bg-muted/30">
-                          <th className="text-left p-4 font-semibold text-foreground">Nome</th>
-                          <th className="text-left p-4 font-semibold text-foreground">Região</th>
-                          <th className="text-left p-4 font-semibold text-foreground hidden sm:table-cell">Tipo</th>
-                          <th className="text-left p-4 font-semibold text-foreground hidden sm:table-cell">Idade</th>
-                          <th className="text-left p-4 font-semibold text-foreground">Estado</th>
-                          <th className="text-left p-4 font-semibold text-foreground hidden md:table-cell">Data</th>
-                          <th className="text-right p-4 font-semibold text-foreground w-20">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {beneficiaryRequests.map((r: any) => (
-                          <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                            <td className="p-4">
-                              <p className="font-medium text-foreground">{r.contact_name}</p>
-                              <p className="text-xs text-muted-foreground">{r.contact_email}</p>
-                            </td>
-                            <td className="p-4"><Badge variant="secondary">{r.region}</Badge></td>
-                            <td className="p-4 hidden sm:table-cell text-muted-foreground">{r.beneficiary_type === "ate_8" ? "Criança até 8 anos" : r.beneficiary_type === "mais_8" ? "Criança >8 anos" : r.beneficiary_type === "crianca" ? "Criança" : r.beneficiary_type === "adulto" ? "Adulto" : r.beneficiary_type}</td>
-                            <td className="p-4 hidden sm:table-cell text-muted-foreground">{r.beneficiary_age}</td>
-                            <td className="p-4">
-                              <Badge className={
-                                r.status === "aprovado" ? "bg-success/10 text-success" :
-                                r.status === "em_avaliacao" ? "bg-accent/10 text-accent" :
-                                r.status === "concluido" ? "bg-accent/10 text-accent" :
-                                "bg-muted text-muted-foreground"
-                              }>
-                                {r.status === "pendente" ? "Pendente" : r.status === "em_avaliacao" ? "Em Avaliação" : r.status === "aprovado" ? "Aprovado" : r.status === "concluido" ? "Concluído" : r.status}
-                              </Badge>
-                            </td>
-                            <td className="p-4 hidden md:table-cell text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("pt-PT")}</td>
-                            <td className="p-4 text-right">
-                              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={() => setSelectedRequest(r)} title="Ver detalhes">
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
+            <BeneficiaryRequestsList />
           )}
 
           <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
@@ -825,6 +771,13 @@ const Admin = () => {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Project Instances Tab */}
+          {activeTab === "project-instances" && (
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+              <ProjectInstancesList />
             </div>
           )}
 
