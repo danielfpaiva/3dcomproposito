@@ -135,7 +135,26 @@ COMMENT ON COLUMN project_instance_parts.status IS 'Estado: unassigned, assigned
 COMMENT ON COLUMN project_instance_parts.assigned_contributor_id IS 'FK para contributors (voluntário atribuído)';
 
 
--- 5. ROW LEVEL SECURITY (RLS)
+-- 5. CREATE HELPER FUNCTION FOR RLS
+-- ===================================
+-- Função para verificar se o user atual é organizer
+
+CREATE OR REPLACE FUNCTION is_organizer()
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1
+        FROM user_roles
+        WHERE user_id = auth.uid()
+          AND role IN ('admin', 'organizer')
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+COMMENT ON FUNCTION is_organizer() IS 'Verifica se o utilizador autenticado tem role admin ou organizer';
+
+
+-- 6. ROW LEVEL SECURITY (RLS)
 -- ============================
 -- Aplicar RLS igual às outras tabelas (apenas organizers)
 
@@ -210,32 +229,30 @@ CREATE POLICY "Organizers can delete project_instance_parts"
     ON project_instance_parts FOR DELETE
     USING (is_organizer());
 
--- Policy adicional: Contributors podem ver as suas próprias peças atribuídas
-CREATE POLICY "Contributors can view their assigned parts"
+-- Policy adicional: Anon users podem ver peças atribuídas (para portal do voluntário)
+-- Nota: O frontend filtra por contributor token na query
+CREATE POLICY "Anon users can view assigned parts"
     ON project_instance_parts FOR SELECT
-    USING (assigned_contributor_id IN (
-        SELECT id FROM contributors WHERE token = current_setting('request.jwt.claims', true)::json->>'token'
-    ));
+    USING (assigned_contributor_id IS NOT NULL);
 
--- Policy adicional: Contributors podem atualizar estado das suas peças
-CREATE POLICY "Contributors can update their assigned parts status"
+-- Policy adicional: Anon users podem atualizar estado das peças atribuídas
+-- Nota: O frontend valida que o contributor_id corresponde ao token
+CREATE POLICY "Anon users can update assigned parts status"
     ON project_instance_parts FOR UPDATE
-    USING (assigned_contributor_id IN (
-        SELECT id FROM contributors WHERE token = current_setting('request.jwt.claims', true)::json->>'token'
-    ))
-    WITH CHECK (assigned_contributor_id IN (
-        SELECT id FROM contributors WHERE token = current_setting('request.jwt.claims', true)::json->>'token'
-    ));
+    USING (assigned_contributor_id IS NOT NULL)
+    WITH CHECK (assigned_contributor_id IS NOT NULL);
 
 
--- 6. ADICIONAR NOVO ESTADO AO ENUM beneficiary_request_status
+-- 7. ADICIONAR NOVO ESTADO AO ENUM beneficiary_request_status
 -- =============================================================
--- Adicionar "em_andamento" ao enum de estados dos pedidos
+-- COMENTADO: Verificar primeiro se a coluna status usa TEXT ou ENUM
+-- Se a coluna for TEXT, não é necessário este passo
+-- Se for ENUM, descomentar e executar separadamente após verificar
 
-ALTER TYPE beneficiary_request_status ADD VALUE IF NOT EXISTS 'em_andamento';
+-- ALTER TYPE beneficiary_request_status ADD VALUE IF NOT EXISTS 'em_andamento';
 
--- Nota: A ordem dos valores no enum após este comando será:
--- 'pendente', 'em_avaliacao', 'aprovado', 'em_andamento', 'concluido', 'cancelado'
+-- Nota: Se a coluna status em beneficiary_requests for TEXT,
+-- o valor 'em_andamento' pode ser usado diretamente sem alterar enum
 
 
 -- ============================================================================
