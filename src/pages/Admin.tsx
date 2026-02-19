@@ -186,8 +186,8 @@ const Admin = () => {
   const tabs = [
     { id: "overview" as const, label: "Visão Geral", icon: BarChart3 },
     { id: "contributors" as const, label: "Voluntários", icon: Users },
-    { id: "project-instances" as const, label: "Projetos", icon: Package },
     { id: "initiatives" as const, label: "Iniciativas", icon: Layers },
+    { id: "project-instances" as const, label: "Projetos", icon: Package },
     { id: "requests" as const, label: "Pedidos", icon: Accessibility },
     { id: "donations" as const, label: "Donativos", icon: Heart },
   ];
