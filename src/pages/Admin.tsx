@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Printer, Users, Target, LogOut, Plus, Loader2,
-  BarChart3, Package, Armchair, ChevronLeft, Heart, Accessibility, UserPlus, Link2, Eye,
-  ArrowUpDown, ChevronUp, ChevronDown,
+  BarChart3, Package, Heart, Accessibility, Link2, Eye,
+  ArrowUpDown, ChevronUp, ChevronDown, Layers,
 } from "lucide-react";
 import {
   Dialog,
@@ -27,11 +27,11 @@ import {
 } from "@/components/ui/select";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
-import ProjectProgressCard from "@/components/admin/ProjectProgressCard";
-import ProjectPartsList from "@/components/admin/ProjectPartsList";
 import AddContributorDialog from "@/components/admin/AddContributorDialog";
 import ContributorsFilters from "@/components/admin/ContributorsFilters";
-import AllocateVolunteerDialog from "@/components/admin/AllocateVolunteerDialog";
+import InitiativesList from "@/components/admin/InitiativesList";
+import ProjectInstancesList from "@/components/admin/ProjectInstancesList";
+import BeneficiaryRequestsList from "@/components/admin/BeneficiaryRequestsList";
 
 const PORTAL_BASE = "https://www.3dcomproposito.pt";
 
@@ -56,7 +56,7 @@ const Admin = () => {
   };
   const queryClient = useQueryClient();
   const { data: stats } = useDashboardStats();
-  const [activeTab, setActiveTab] = useState<"overview" | "contributors" | "projects" | "requests" | "donations">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "contributors" | "project-instances" | "requests" | "donations" | "initiatives">("overview");
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [filterSearch, setFilterSearch] = useState("");
   const [filterRegion, setFilterRegion] = useState("all");
@@ -68,8 +68,6 @@ const Admin = () => {
   const [sortKey, setSortKey] = useState<"name" | "location" | "printer" | "materials" | "experience" | "turnaround" | "can_ship" | "region">("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [groupBy, setGroupBy] = useState<"none" | "region" | "experience" | "can_ship">("region");
-  const [allocateDialogOpen, setAllocateDialogOpen] = useState(false);
-  const [allocateContributor, setAllocateContributor] = useState<typeof contributors[0] | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
 
   useEffect(() => {
@@ -85,26 +83,6 @@ const Admin = () => {
         .select("*")
         .order("created_at", { ascending: false })
         .range(0, 4999);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  const { data: projects = [], isLoading: projLoading } = useQuery({
-    queryKey: ["admin-projects"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("wheelchair_projects").select("*").order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  const { data: parts = [] } = useQuery({
-    queryKey: ["admin-parts"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("parts").select("*");
       if (error) throw error;
       return data;
     },
@@ -131,15 +109,6 @@ const Admin = () => {
     enabled: !!user,
   });
 
-  const { data: templates = [] } = useQuery({
-    queryKey: ["part-templates"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("part_templates").select("*").order("sort_order");
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
 
   const printerModels = useMemo(() => [...new Set(contributors.flatMap((c) => (c as any).printer_models ?? []))].sort(), [contributors]);
   const filteredContributors = useMemo(() => {
@@ -192,50 +161,6 @@ const Admin = () => {
   const experienceOrder = ["beginner", "intermediate", "expert"];
   const experienceNames: Record<string, string> = { beginner: "🔰 Iniciante", intermediate: "Intermédio", expert: "⭐ Experiente" };
 
-  const [newProjectName, setNewProjectName] = useState("");
-  const [creatingProject, setCreatingProject] = useState(false);
-
-  const createProjectWithParts = async () => {
-    if (!newProjectName.trim() || creatingProject) return;
-    setCreatingProject(true);
-
-    // Create project with target_parts = template count
-    const { data: project, error: projError } = await supabase
-      .from("wheelchair_projects")
-      .insert({ name: newProjectName, target_parts: templates.length || 24, status: "planning" })
-      .select()
-      .single();
-
-    if (projError || !project) {
-      toast({ title: "Erro", description: projError?.message ?? "Erro ao criar projeto", variant: "destructive" });
-      setCreatingProject(false);
-      return;
-    }
-
-    // Create all TMT parts for this project
-    const partsToInsert = templates.map((t) => ({
-      project_id: project.id,
-      part_name: t.part_name,
-      category: t.category,
-      material: t.material,
-      status: "unassigned" as const,
-    }));
-
-    if (partsToInsert.length > 0) {
-      const { error: partsError } = await supabase.from("parts").insert(partsToInsert);
-      if (partsError) {
-        toast({ title: "Projeto criado, mas erro nas peças", description: partsError.message, variant: "destructive" });
-      }
-    }
-
-    toast({ title: "Missão Criada!", description: `${project.name} com ${partsToInsert.length} peças TMT.` });
-    setNewProjectName("");
-    setCreatingProject(false);
-    setSelectedProjectId(project.id);
-    queryClient.invalidateQueries({ queryKey: ["admin-projects"] });
-    queryClient.invalidateQueries({ queryKey: ["admin-parts"] });
-    queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-  };
 
   if (authLoading) {
     return (
@@ -261,14 +186,12 @@ const Admin = () => {
   const tabs = [
     { id: "overview" as const, label: "Visão Geral", icon: BarChart3 },
     { id: "contributors" as const, label: "Voluntários", icon: Users },
-    { id: "projects" as const, label: "Projetos", icon: Armchair },
+    { id: "project-instances" as const, label: "Projetos", icon: Package },
+    { id: "initiatives" as const, label: "Iniciativas", icon: Layers },
     { id: "requests" as const, label: "Pedidos", icon: Accessibility },
     { id: "donations" as const, label: "Donativos", icon: Heart },
   ];
 
-  const getProjectParts = (projectId: string) => parts.filter((p) => p.project_id === projectId);
-  const selectedProject = projects.find((p) => p.id === selectedProjectId);
-  const selectedParts = selectedProjectId ? getProjectParts(selectedProjectId) : [];
 
 
 
@@ -315,57 +238,25 @@ const Admin = () => {
           </div>
 
           {activeTab === "overview" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-card rounded-2xl border border-border p-6">
-                <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Voluntários Recentes</h3>
-                {contribLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
-                ) : contributors.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">Ainda sem voluntários.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {contributors.slice(0, 5).map((c) => (
-                      <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{c.name}</p>
-                          <p className="text-xs text-muted-foreground">{c.location} · {((c as any).printer_models ?? []).join(", ") || "—"}</p>
-                        </div>
-                        <Badge variant="secondary" className="text-xs">{c.region}</Badge>
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Voluntários Recentes</h3>
+              {contribLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
+              ) : contributors.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Ainda sem voluntários.</p>
+              ) : (
+                <div className="space-y-2">
+                  {contributors.slice(0, 10).map((c) => (
+                    <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{c.name}</p>
+                        <p className="text-xs text-muted-foreground">{c.location} · {((c as any).printer_models ?? []).join(", ") || "—"}</p>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-card rounded-2xl border border-border p-6">
-                <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Projetos</h3>
-                {projLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
-                ) : projects.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">Sem projetos ativos. Hora de iniciar uma nova missão!</p>
-                ) : (
-                  <div className="space-y-3">
-                    {projects.slice(0, 5).map((p) => {
-                      const pParts = getProjectParts(p.id);
-                      const done = pParts.filter((pt) => pt.status === "complete").length;
-                      return (
-                        <div key={p.id} className="p-3 bg-muted/30 rounded-xl">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-foreground">{p.name}</span>
-                            <Badge className={p.status === "complete" ? "bg-success/10 text-success" : p.status === "active" ? "bg-accent/10 text-accent" : "bg-muted text-muted-foreground"}>
-                              {statusLabels[p.status] ?? p.status}
-                            </Badge>
-                          </div>
-                          <div className="w-full bg-muted rounded-full h-1.5">
-                            <div className="h-1.5 rounded-full bg-accent transition-all" style={{ width: `${pParts.length ? (done / pParts.length) * 100 : 0}%` }} />
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">{done}/{pParts.length} peças concluídas</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+                      <Badge variant="secondary" className="text-xs">{c.region}</Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -485,18 +376,6 @@ const Admin = () => {
                                     <Link2 className="w-3.5 h-3.5" />
                                   </Button>
                                 )}
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 text-xs gap-1"
-                                  onClick={() => {
-                                    setAllocateContributor(c);
-                                    setAllocateDialogOpen(true);
-                                  }}
-                                >
-                                  <UserPlus className="w-3.5 h-3.5" />
-                                  Alocar
-                                </Button>
                               </div>
                             </td>
                           </tr>
@@ -559,149 +438,9 @@ const Admin = () => {
             </div>
           )}
 
-          <AllocateVolunteerDialog
-            open={allocateDialogOpen}
-            onOpenChange={setAllocateDialogOpen}
-            contributor={allocateContributor}
-            projects={projects}
-            parts={parts}
-          />
-
-          {activeTab === "projects" && (
-            <div className="space-y-6">
-              {/* Create new project */}
-              <div className="bg-card rounded-2xl border border-border p-6">
-                <h3 className="text-sm font-bold text-foreground mb-3 uppercase tracking-wider">Criar Novo Projeto TMT</h3>
-                <p className="text-xs text-muted-foreground mb-4">Ao criar um projeto, as 24 peças do 3D Toddler Mobility Trainer serão automaticamente adicionadas.</p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Input
-                    placeholder="Nome do projeto (ex.: Cadeira Lisboa #1)"
-                    value={newProjectName}
-                    onChange={(e) => setNewProjectName(e.target.value)}
-                    className="flex-1"
-                    onKeyDown={(e) => e.key === "Enter" && createProjectWithParts()}
-                  />
-                  <Button
-                    onClick={createProjectWithParts}
-                    disabled={creatingProject || !newProjectName.trim()}
-                    className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold"
-                  >
-                    {creatingProject ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
-                    Criar com {templates.length || 24} Peças
-                  </Button>
-                </div>
-              </div>
-
-              {/* Project list + detail */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-1 space-y-3">
-                  <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Projetos ({projects.length})</h3>
-                  {projLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
-                  ) : projects.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">Sem projetos. Crie o primeiro acima!</p>
-                  ) : (
-                    projects.map((p) => (
-                      <ProjectProgressCard
-                        key={p.id}
-                        project={p}
-                        parts={getProjectParts(p.id)}
-                        onSelect={() => setSelectedProjectId(p.id === selectedProjectId ? null : p.id)}
-                        isSelected={p.id === selectedProjectId}
-                      />
-                    ))
-                  )}
-                </div>
-
-                <div className="lg:col-span-2">
-                  {selectedProject ? (
-                    <div className="bg-card rounded-2xl border border-border p-6">
-                      <div className="flex items-center gap-3 mb-6">
-                        <button onClick={() => setSelectedProjectId(null)} className="lg:hidden text-muted-foreground hover:text-foreground">
-                          <ChevronLeft className="w-5 h-5" />
-                        </button>
-                        <div>
-                          <h3 className="text-lg font-bold text-foreground">{selectedProject.name}</h3>
-                          <p className="text-xs text-muted-foreground">
-                            {selectedParts.filter((p) => p.status === "complete").length}/{selectedParts.length} peças concluídas ·{" "}
-                            {selectedParts.filter((p) => p.status === "unassigned").length} por atribuir
-                          </p>
-                        </div>
-                      </div>
-                      <ProjectPartsList parts={selectedParts} contributors={contributors as any} />
-                    </div>
-                  ) : (
-                    <div className="bg-card rounded-2xl border border-border p-12 flex items-center justify-center">
-                      <div className="text-center">
-                        <Package className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                        <p className="text-sm text-muted-foreground">Selecione um projeto para gerir as peças</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
 
           {activeTab === "requests" && (
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Pedidos de Beneficiários ({beneficiaryRequests.length})</h3>
-              {requestsLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
-              ) : beneficiaryRequests.length === 0 ? (
-                <div className="bg-card rounded-2xl border border-border p-12 text-center">
-                  <Accessibility className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">Ainda sem pedidos de ajuda.</p>
-                </div>
-              ) : (
-                <div className="bg-card rounded-2xl border border-border overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-border bg-muted/30">
-                          <th className="text-left p-4 font-semibold text-foreground">Nome</th>
-                          <th className="text-left p-4 font-semibold text-foreground">Região</th>
-                          <th className="text-left p-4 font-semibold text-foreground hidden sm:table-cell">Tipo</th>
-                          <th className="text-left p-4 font-semibold text-foreground hidden sm:table-cell">Idade</th>
-                          <th className="text-left p-4 font-semibold text-foreground">Estado</th>
-                          <th className="text-left p-4 font-semibold text-foreground hidden md:table-cell">Data</th>
-                          <th className="text-right p-4 font-semibold text-foreground w-20">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {beneficiaryRequests.map((r: any) => (
-                          <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                            <td className="p-4">
-                              <p className="font-medium text-foreground">{r.contact_name}</p>
-                              <p className="text-xs text-muted-foreground">{r.contact_email}</p>
-                            </td>
-                            <td className="p-4"><Badge variant="secondary">{r.region}</Badge></td>
-                            <td className="p-4 hidden sm:table-cell text-muted-foreground">{r.beneficiary_type === "ate_8" ? "Criança até 8 anos" : r.beneficiary_type === "mais_8" ? "Criança >8 anos" : r.beneficiary_type === "crianca" ? "Criança" : r.beneficiary_type === "adulto" ? "Adulto" : r.beneficiary_type}</td>
-                            <td className="p-4 hidden sm:table-cell text-muted-foreground">{r.beneficiary_age}</td>
-                            <td className="p-4">
-                              <Badge className={
-                                r.status === "aprovado" ? "bg-success/10 text-success" :
-                                r.status === "em_avaliacao" ? "bg-accent/10 text-accent" :
-                                r.status === "concluido" ? "bg-accent/10 text-accent" :
-                                "bg-muted text-muted-foreground"
-                              }>
-                                {r.status === "pendente" ? "Pendente" : r.status === "em_avaliacao" ? "Em Avaliação" : r.status === "aprovado" ? "Aprovado" : r.status === "concluido" ? "Concluído" : r.status}
-                              </Badge>
-                            </td>
-                            <td className="p-4 hidden md:table-cell text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("pt-PT")}</td>
-                            <td className="p-4 text-right">
-                              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={() => setSelectedRequest(r)} title="Ver detalhes">
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
+            <BeneficiaryRequestsList />
           )}
 
           <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
@@ -823,6 +562,20 @@ const Admin = () => {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Project Instances Tab */}
+          {activeTab === "project-instances" && (
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+              <ProjectInstancesList />
+            </div>
+          )}
+
+          {/* Initiatives Tab */}
+          {activeTab === "initiatives" && (
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+              <InitiativesList />
             </div>
           )}
         </div>

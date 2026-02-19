@@ -70,8 +70,17 @@ const Portal = () => {
       }
 
       setContributor(data);
+      // Fetch assigned parts from new system (project_instance_parts)
       const { data: partsData } = await supabase
-        .from("parts").select("*, wheelchair_projects(name)").eq("assigned_contributor_id", data.id);
+        .from("project_instance_parts")
+        .select(`
+          *,
+          project_instances!inner(
+            name,
+            initiatives(name)
+          )
+        `)
+        .eq("assigned_contributor_id", data.id);
       setAssignedParts(partsData ?? []);
       setLoading(false);
     };
@@ -123,7 +132,7 @@ const Portal = () => {
     if (!contributor) return;
     setUpdatingPartId(partId);
     const { error: err } = await supabase
-      .from("parts")
+      .from("project_instance_parts")
       .update({ status: newStatus })
       .eq("id", partId)
       .eq("assigned_contributor_id", contributor.id);
@@ -389,9 +398,12 @@ const Portal = () => {
                           {statusLabels[part.status] ?? part.status}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        {part.wheelchair_projects?.name && (
-                          <span>Projeto: {part.wheelchair_projects.name}</span>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                        {part.project_instances?.name && (
+                          <span>Projeto: {part.project_instances.name}</span>
+                        )}
+                        {part.project_instances?.initiatives?.name && (
+                          <span>· {part.project_instances.initiatives.name}</span>
                         )}
                         {part.material && (
                           <Badge variant="secondary" className="text-[10px]">{part.material}</Badge>
