@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Loader2, ChevronRight, Pencil, Trash2, X, Check, PackageOpen } from "lucide-react";
+import { Plus, Loader2, ChevronRight, Pencil, Trash2, X, Check, PackageOpen, Copy } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -184,6 +184,28 @@ const InitiativesList = () => {
   const handleDeletePart = async (partId: string) => {
     const part = parts.find((p) => p.id === partId);
     setConfirmDelete({ type: "part", id: partId, label: part?.part_name ?? "esta peça" });
+  };
+
+  // Duplicate part
+  const handleDuplicatePart = async (partId: string) => {
+    const part = parts.find((p) => p.id === partId);
+    if (!part || !selectedId) return;
+
+    const { error } = await supabase.from("initiative_parts").insert({
+      initiative_id: selectedId,
+      part_name: part.part_name,
+      category: part.category,
+      material: part.material,
+      file_url: part.file_url,
+      sort_order: parts.length,
+    });
+
+    if (error) {
+      toast({ title: "Erro ao duplicar", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Peça duplicada!", description: `"${part.part_name}" foi duplicada com sucesso.` });
+      queryClient.invalidateQueries({ queryKey: ["initiative-parts", selectedId] });
+    }
   };
 
   // Execute confirmed delete
@@ -391,12 +413,21 @@ const InitiativesList = () => {
                             <button
                               onClick={() => { setEditingPartId(part.id); setEditingPart({}); }}
                               className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                              title="Editar peça"
                             >
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
                             <button
+                              onClick={() => handleDuplicatePart(part.id)}
+                              className="p-1 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                              title="Duplicar peça"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                            <button
                               onClick={() => handleDeletePart(part.id)}
                               className="p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
+                              title="Eliminar peça"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
