@@ -178,7 +178,7 @@ const Admin = () => {
 
   const statCards = [
     { label: "Voluntários", value: stats?.total_contributors ?? 0, icon: Users, color: "text-accent" },
-    { label: "Projetos", value: stats?.total_projects ?? 0, icon: Armchair, color: "text-emerald-light" },
+    { label: "Projetos", value: stats?.total_projects ?? 0, icon: Package, color: "text-emerald-light" },
     { label: "Concluídos", value: stats?.wheelchairs_completed ?? 0, icon: Target, color: "text-success" },
     { label: "Peças Feitas", value: stats?.parts_completed ?? 0, icon: Package, color: "text-navy-light" },
   ];
