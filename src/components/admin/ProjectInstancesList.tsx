@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import PartAssignmentSelect from "./PartAssignmentSelect";
+import { ResendAllocationEmails } from "./ResendAllocationEmails";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Initiative = Tables<"initiatives">;
@@ -436,21 +437,24 @@ const ProjectInstancesList = () => {
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-1">
-                    <h3 className="text-lg font-bold text-foreground">{selectedProject.name}</h3>
-                    <Select
-                      value={selectedProject.status}
-                      onValueChange={(v) => handleProjectStatusChange(selectedProject.id, v)}
-                    >
-                      <SelectTrigger className="w-36 h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PROJECT_STATUSES.map((s) => (
-                          <SelectItem key={s} value={s} className="text-xs">{statusLabels[s]}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="flex items-center justify-between gap-3 mb-1">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-lg font-bold text-foreground">{selectedProject.name}</h3>
+                      <Select
+                        value={selectedProject.status}
+                        onValueChange={(v) => handleProjectStatusChange(selectedProject.id, v)}
+                      >
+                        <SelectTrigger className="w-36 h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PROJECT_STATUSES.map((s) => (
+                            <SelectItem key={s} value={s} className="text-xs">{statusLabels[s]}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <ResendAllocationEmails projectId={selectedProject.id} projectName={selectedProject.name} />
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {selectedProject.initiatives?.name} · {parts.filter((p) => p.status !== "unassigned").length}/{parts.length} peças atribuídas ·{" "}
