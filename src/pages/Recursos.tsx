@@ -1,6 +1,5 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import ResourceLinks from "@/components/ResourceLinks";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -18,8 +17,6 @@ const Recursos = () => {
               <h1 className="text-3xl font-black text-foreground mb-2">Recursos para Makers</h1>
               <p className="text-muted-foreground">Tudo o que precisa para imprimir as peças do Toddler Mobility Trainer.</p>
             </div>
-
-            <ResourceLinks className="mb-6" />
 
             <div className="bg-card rounded-2xl border border-border p-6 shadow-sm mb-6">
               <h2 className="text-sm font-bold text-foreground mb-3 uppercase tracking-wider">Informação Importante</h2>

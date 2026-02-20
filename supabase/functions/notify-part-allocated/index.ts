@@ -6,7 +6,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const PORTAL_BASE = "https://www.3dcomproposito.pt";
 const LOGO_URL = "https://www.3dcomproposito.pt/3D_com_Prop%C3%B3sito-sem-fundo.png";
-const MAKER_GUIDE_URL = "https://bsbqmqfznkozqagdhvoj.supabase.co/storage/v1/object/public/resources/TMT_MAKER_GUIDE_rev_A_compressed.pdf";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const FROM_EMAIL = Deno.env.get("FROM_EMAIL") ?? "3D com Propósito <onboarding@resend.dev>";
 
@@ -154,12 +153,6 @@ Deno.serve(async (req) => {
       <li>Aceda ao portal e atualize o estado da peça</li>
       <li>Quando estiver pronto, envie a peça para o coordenador</li>
     </ol>
-
-    <p style="margin-top: 12px;">
-      <a href="${MAKER_GUIDE_URL}" style="color: #10b981; font-size: 13px;">
-        📄 Descarregar Guia do Maker (PDF)
-      </a>
-    </p>
 
     <p style="margin-top: 30px;"><strong>Obrigado por fazeres parte desta causa!</strong> 💚</p>
 

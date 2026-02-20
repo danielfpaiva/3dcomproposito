@@ -220,15 +220,15 @@ CREATE INDEX idx_donations_created_at ON donations(created_at);
 -- VIEWS
 -- ============================================
 
--- Dashboard stats view
+-- Dashboard stats view (updated for initiative template system)
 CREATE OR REPLACE VIEW dashboard_stats AS
 SELECT
     (SELECT COUNT(*) FROM contributors) as total_contributors,
-    (SELECT COUNT(*) FROM wheelchair_projects) as total_projects,
-    (SELECT COUNT(*) FROM parts) as total_parts,
-    (SELECT COUNT(*) FROM parts WHERE status = 'printed') as parts_completed,
-    (SELECT COUNT(*) FROM parts WHERE status = 'printing') as parts_in_progress,
-    (SELECT COUNT(*) FROM wheelchair_projects WHERE status = 'in_progress') as wheelchairs_completed,
+    (SELECT COUNT(*) FROM project_instances) as total_projects,
+    (SELECT COUNT(*) FROM project_instance_parts) as total_parts,
+    (SELECT COUNT(*) FROM project_instance_parts WHERE status IN ('printed', 'shipped', 'complete')) as parts_completed,
+    (SELECT COUNT(*) FROM project_instance_parts WHERE status = 'printing') as parts_in_progress,
+    (SELECT COUNT(*) FROM project_instances WHERE status = 'completed') as wheelchairs_completed,
     (SELECT COUNT(*) FROM donations) as total_donations,
     (SELECT COALESCE(SUM(amount_cents), 0) FROM donations) as total_donated_cents;
 
