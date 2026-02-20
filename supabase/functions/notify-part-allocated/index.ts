@@ -69,8 +69,8 @@ Deno.serve(async (req) => {
   }
 
   const { data: parts, error: partsError } = await supabase
-    .from("parts")
-    .select("id, part_name, file_url, wheelchair_projects(name)")
+    .from("project_instance_parts")
+    .select("id, part_name, file_url, project_instances(name)")
     .in("id", part_ids);
 
   if (partsError || !parts?.length) {
@@ -80,9 +80,9 @@ Deno.serve(async (req) => {
     );
   }
 
-  type PartRow = { part_name: string; file_url: string | null; wheelchair_projects: { name: string }[] | null };
+  type PartRow = { part_name: string; file_url: string | null; project_instances: { name: string } | null };
   const typedParts = parts as unknown as PartRow[];
-  const projectNames = [...new Set(typedParts.map((p) => p.wheelchair_projects?.[0]?.name).filter(Boolean))] as string[];
+  const projectNames = [...new Set(typedParts.map((p) => p.project_instances?.name).filter(Boolean))] as string[];
   const portalUrl = `${PORTAL_BASE}/portal?token=${encodeURIComponent(contributor.token)}`;
   const partCount = typedParts.length;
 
