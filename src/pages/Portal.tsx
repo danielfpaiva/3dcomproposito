@@ -70,17 +70,17 @@ const Portal = () => {
       }
 
       setContributor(data);
+
       // Fetch assigned parts from new system (project_instance_parts)
-      const { data: partsData } = await supabase
+      const { data: partsData, error: partsError } = await supabase
         .from("project_instance_parts")
-        .select(`
-          *,
-          project_instances!inner(
-            name,
-            initiatives(name)
-          )
-        `)
+        .select("*, project_instances(name, initiative_id, initiatives(name))")
         .eq("assigned_contributor_id", data.id);
+
+      if (partsError) {
+        console.error("Error fetching parts:", partsError);
+      }
+
       setAssignedParts(partsData ?? []);
       setLoading(false);
     };
