@@ -1,14 +1,17 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
+# robots.txt for 3D com Propósito
+# https://www.3dcomproposito.pt
 
 User-agent: *
 Allow: /
+Allow: /contribute
+Allow: /request
+Allow: /recursos
+Allow: /donate
+
+# Block admin and portal areas from search engines
+Disallow: /admin
+Disallow: /auth
+Disallow: /portal
+
+# Sitemap location
+Sitemap: https://www.3dcomproposito.pt/sitemap.xml

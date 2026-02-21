@@ -6,10 +6,12 @@ import ProgressSection from "@/components/ProgressSection";
 import DualCTASection from "@/components/DualCTASection";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
+import SEOSchema from "@/components/SEOSchema";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEOSchema />
       <Navbar />
       <HeroSection />
       <AboutSection />
