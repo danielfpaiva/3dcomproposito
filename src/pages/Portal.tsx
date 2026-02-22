@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Printer, MapPin, Calendar, Package, Mail, Pencil, X, Check, Loader2, AlertCircle, Star, Clock, Lock, Download, User, ChevronDown, ChevronUp } from "lucide-react";
+import { Printer, MapPin, Calendar, Package, Mail, Pencil, X, Check, Loader2, AlertCircle, Star, Clock, Lock, Download, User, ChevronDown, ChevronUp, Key, RotateCcw } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
@@ -46,9 +46,12 @@ const Portal = () => {
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [recovering, setRecovering] = useState(false);
   const [recoveryError, setRecoveryError] = useState<string | null>(null);
-  const [authStep, setAuthStep] = useState<"email" | "set-password" | "login">("email");
+  const [authStep, setAuthStep] = useState<"email" | "set-password" | "login" | "forgot-password" | "verify-code" | "reset-password">("email");
   const [password, setPassword] = useState("");
   const [contributorName, setContributorName] = useState("");
+  const [resetCode, setResetCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const { toast } = useToast();
   const [assignedParts, setAssignedParts] = useState<any[]>([]);
   const [updatingPartId, setUpdatingPartId] = useState<string | null>(null);
@@ -202,13 +205,81 @@ const Portal = () => {
     setRecovering(false);
   };
 
+  const handleRequestReset = async () => {
+    setRecovering(true);
+    setRecoveryError(null);
+    try {
+      const res = await supabase.functions.invoke("contributor-auth", {
+        body: { email: recoveryEmail.trim(), action: "request-reset" },
+      });
+      const data = res.data;
+      if (data?.ok && data?.code_sent) {
+        setAuthStep("verify-code");
+        toast({ title: "Código enviado!", description: `Enviámos um código de 6 dígitos para ${recoveryEmail}` });
+      } else {
+        setRecoveryError(data?.error || "Erro ao enviar código.");
+      }
+    } catch {
+      setRecoveryError("Erro de ligação. Tente novamente.");
+    }
+    setRecovering(false);
+  };
+
+  const handleVerifyCode = async () => {
+    if (resetCode.length !== 6) return;
+    setRecovering(true);
+    setRecoveryError(null);
+    try {
+      const res = await supabase.functions.invoke("contributor-auth", {
+        body: { email: recoveryEmail.trim(), code: resetCode, action: "verify-code" },
+      });
+      const data = res.data;
+      if (data?.ok && data?.code_valid) {
+        setAuthStep("reset-password");
+      } else {
+        setRecoveryError(data?.error || "Código inválido.");
+      }
+    } catch {
+      setRecoveryError("Erro de ligação. Tente novamente.");
+    }
+    setRecovering(false);
+  };
+
+  const handleResetPassword = async () => {
+    if (!newPassword || newPassword.length < 4) {
+      setRecoveryError("A password deve ter pelo menos 4 caracteres.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setRecoveryError("As passwords não coincidem.");
+      return;
+    }
+    setRecovering(true);
+    setRecoveryError(null);
+    try {
+      const res = await supabase.functions.invoke("contributor-auth", {
+        body: { email: recoveryEmail.trim(), code: resetCode, new_password: newPassword, action: "reset-password" },
+      });
+      const data = res.data;
+      if (data?.ok && data?.token) {
+        toast({ title: "Password redefinida!", description: "A sua password foi atualizada com sucesso." });
+        window.location.href = `/portal?token=${data.token}`;
+      } else {
+        setRecoveryError(data?.error || "Erro ao redefinir password.");
+      }
+    } catch {
+      setRecoveryError("Erro de ligação. Tente novamente.");
+    }
+    setRecovering(false);
+  };
+
   if (error || !contributor) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="pt-32 pb-20 px-6 flex items-center justify-center min-h-[70vh]">
           <div className="text-center max-w-md">
-            {authStep === "email" ? (
+            {authStep === "email" && (
               <>
                 <Mail className="w-12 h-12 text-accent mx-auto mb-4" />
                 <h1 className="text-2xl font-black text-foreground mb-2">Aceder ao Meu Portal</h1>
@@ -232,9 +303,15 @@ const Portal = () => {
                     {recovering ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
                     Continuar
                   </Button>
+                  <p className="text-xs text-muted-foreground mt-4">
+                    Ainda não se inscreveu?{" "}
+                    <Link to="/contribute" className="text-accent hover:underline font-medium">Juntar-me à Missão</Link>
+                  </p>
                 </div>
               </>
-            ) : (
+            )}
+
+            {(authStep === "set-password" || authStep === "login") && (
               <>
                 <Lock className="w-12 h-12 text-accent mx-auto mb-4" />
                 <h1 className="text-2xl font-black text-foreground mb-2">
@@ -265,19 +342,131 @@ const Portal = () => {
                     {recovering ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
                     {authStep === "set-password" ? "Definir Password e Entrar" : "Entrar"}
                   </Button>
+                  {authStep === "login" && (
+                    <button
+                      onClick={() => setAuthStep("forgot-password")}
+                      className="text-xs text-accent hover:underline font-medium w-full text-center"
+                    >
+                      Esqueceu-se da password? Recuperar
+                    </button>
+                  )}
                   <button
                     onClick={() => { setAuthStep("email"); setPassword(""); setRecoveryError(null); }}
-                    className="text-xs text-muted-foreground hover:text-accent transition-colors w-full text-center mt-2"
+                    className="text-xs text-muted-foreground hover:text-accent transition-colors w-full text-center"
                   >
                     ← Voltar ao email
                   </button>
                 </div>
               </>
             )}
-            <p className="text-xs text-muted-foreground mt-6">
-              Ainda não se inscreveu?{" "}
-              <Link to="/contribute" className="text-accent hover:underline font-medium">Juntar-me à Missão</Link>
-            </p>
+
+            {authStep === "forgot-password" && (
+              <>
+                <RotateCcw className="w-12 h-12 text-accent mx-auto mb-4" />
+                <h1 className="text-2xl font-black text-foreground mb-2">Recuperar Password</h1>
+                <p className="text-muted-foreground mb-2">Vamos enviar-lhe um código de recuperação.</p>
+                <p className="text-sm text-muted-foreground mb-6">Email: <strong>{recoveryEmail}</strong></p>
+                <div className="space-y-3 text-left">
+                  {recoveryError && (
+                    <p className="text-sm text-destructive flex items-center gap-1.5">
+                      <AlertCircle className="w-4 h-4" /> {recoveryError}
+                    </p>
+                  )}
+                  <Button onClick={handleRequestReset} disabled={recovering} className="w-full bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
+                    {recovering ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                    Enviar código por email
+                  </Button>
+                  <button
+                    onClick={() => { setAuthStep("login"); setRecoveryError(null); }}
+                    className="text-xs text-muted-foreground hover:text-accent transition-colors w-full text-center"
+                  >
+                    ← Voltar ao login
+                  </button>
+                </div>
+              </>
+            )}
+
+            {authStep === "verify-code" && (
+              <>
+                <Key className="w-12 h-12 text-accent mx-auto mb-4" />
+                <h1 className="text-2xl font-black text-foreground mb-2">Introduza o Código</h1>
+                <p className="text-muted-foreground mb-2">Enviámos um código de 6 dígitos para:</p>
+                <p className="text-sm font-semibold text-foreground mb-6">{recoveryEmail}</p>
+                <div className="space-y-3 text-left">
+                  <Input
+                    type="text"
+                    placeholder="000000"
+                    value={resetCode}
+                    onChange={(e) => setResetCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    onKeyDown={(e) => e.key === "Enter" && resetCode.length === 6 && handleVerifyCode()}
+                    className="text-base py-5 text-center tracking-widest text-2xl font-bold"
+                    autoFocus
+                    maxLength={6}
+                  />
+                  <p className="text-xs text-muted-foreground text-center">
+                    ⏱ Expira em 15 minutos · 🔒 Máximo 3 tentativas
+                  </p>
+                  {recoveryError && (
+                    <p className="text-sm text-destructive flex items-center gap-1.5">
+                      <AlertCircle className="w-4 h-4" /> {recoveryError}
+                    </p>
+                  )}
+                  <Button onClick={handleVerifyCode} disabled={recovering || resetCode.length !== 6} className="w-full bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
+                    {recovering ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                    Validar código
+                  </Button>
+                  <button
+                    onClick={handleRequestReset}
+                    className="text-xs text-accent hover:underline font-medium w-full text-center"
+                  >
+                    Não recebeu? Reenviar código
+                  </button>
+                  <button
+                    onClick={() => { setAuthStep("login"); setResetCode(""); setRecoveryError(null); }}
+                    className="text-xs text-muted-foreground hover:text-accent transition-colors w-full text-center"
+                  >
+                    ← Voltar ao login
+                  </button>
+                </div>
+              </>
+            )}
+
+            {authStep === "reset-password" && (
+              <>
+                <Lock className="w-12 h-12 text-accent mx-auto mb-4" />
+                <h1 className="text-2xl font-black text-foreground mb-2">Nova Password</h1>
+                <p className="text-muted-foreground mb-6">Defina a sua nova password.</p>
+                <div className="space-y-3 text-left">
+                  <Input
+                    type="password"
+                    placeholder="Nova password (mín. 4 caracteres)"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="text-base py-5"
+                    autoFocus
+                    minLength={4}
+                  />
+                  <Input
+                    type="password"
+                    placeholder="Confirme a password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleResetPassword()}
+                    className="text-base py-5"
+                    minLength={4}
+                  />
+                  {recoveryError && (
+                    <p className="text-sm text-destructive flex items-center gap-1.5">
+                      <AlertCircle className="w-4 h-4" /> {recoveryError}
+                    </p>
+                  )}
+                  <Button onClick={handleResetPassword} disabled={recovering || newPassword.length < 4 || newPassword !== confirmPassword} className="w-full bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
+                    {recovering ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                    Definir nova password e entrar
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </div>
         <Footer />
