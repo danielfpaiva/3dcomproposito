@@ -4,9 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Printer, MapPin, Calendar, Package, Mail, Pencil, X, Check, Loader2, AlertCircle, Star, Clock, Lock, Download } from "lucide-react";
+import { Printer, MapPin, Calendar, Package, Mail, Pencil, X, Check, Loader2, AlertCircle, Star, Clock, Lock, Download, User, ChevronDown, ChevronUp } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
@@ -50,6 +52,7 @@ const Portal = () => {
   const { toast } = useToast();
   const [assignedParts, setAssignedParts] = useState<any[]>([]);
   const [updatingPartId, setUpdatingPartId] = useState<string | null>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -308,6 +311,22 @@ const Portal = () => {
     complete: "bg-success/10 text-success",
   };
 
+  // Separate active and completed parts
+  const activeParts = assignedParts.filter(part =>
+    ["assigned", "printing", "printed", "shipped"].includes(part.status)
+  );
+  const completedParts = assignedParts.filter(part => part.status === "complete");
+
+  // Group active parts by project
+  const partsByProject: Record<string, any[]> = {};
+  activeParts.forEach(part => {
+    const projectName = part.project_instances?.name || "Sem projeto";
+    if (!partsByProject[projectName]) {
+      partsByProject[projectName] = [];
+    }
+    partsByProject[projectName].push(part);
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -319,152 +338,219 @@ const Portal = () => {
               <p className="text-muted-foreground">O seu perfil de missão e atribuições</p>
             </div>
 
-            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm mb-6">
-              <h2 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Os Seus Dados</h2>
-              <div className="flex gap-2 mb-4 flex-wrap">
-                {(contributor as any).build_plate_size && (
-                  <Badge variant="secondary" className="text-xs">Build plate: {(contributor as any).build_plate_size}</Badge>
-                )}
-                {(contributor as any).build_volume_ok ? (
-                  <Badge className="bg-accent/10 text-accent">✓ Volume ≥ 256mm</Badge>
-                ) : (
-                  <Badge className="bg-destructive/10 text-destructive">⚠ Volume não confirmado</Badge>
-                )}
-                {(contributor as any).willing_to_collaborate && (
-                  <Badge className="bg-accent/10 text-accent">🤝 Disponível para colaborar</Badge>
-                )}
-              </div>
-              <div className="space-y-3">
-                {fields.map((field) => (
-                  <div key={field.key} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                    <div className="flex items-center gap-3">
-                      <field.icon className="w-4 h-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">{field.label}</p>
-                        {editingField === field.key ? (
-                          field.key === "build_plate_size" ? (
-                            <div className="mt-1 space-y-2">
-                              <Select value={editBuildPlatePreset || "_"} onValueChange={(v) => setEditBuildPlatePreset(v === "_" ? "" : v)}>
-                                <SelectTrigger className="h-8 text-sm w-48"><SelectValue placeholder="Tamanho" /></SelectTrigger>
-                                <SelectContent>
-                                  {BUILD_PLATE_OPTIONS.map((o) => (
-                                    <SelectItem key={o.value || "_"} value={o.value || "_"}>{o.label}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              {editBuildPlatePreset === "outro" && (
-                                <Input value={editBuildPlateCustom} onChange={(e) => setEditBuildPlateCustom(e.target.value)} placeholder="ex.: 200×200×180" className="h-8 text-sm w-48" />
-                              )}
-                              <div className="flex items-center gap-2">
+            <Tabs defaultValue="dados" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="dados" className="flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Dados Pessoais
+                </TabsTrigger>
+                <TabsTrigger value="atribuicoes" className="flex items-center gap-2">
+                  <Package className="w-4 h-4" />
+                  Atribuições
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="dados">
+                <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+                  <div className="flex gap-2 mb-4 flex-wrap">
+                    {(contributor as any).build_plate_size && (
+                      <Badge variant="secondary" className="text-xs">Build plate: {(contributor as any).build_plate_size}</Badge>
+                    )}
+                    {(contributor as any).build_volume_ok ? (
+                      <Badge className="bg-accent/10 text-accent">✓ Volume ≥ 256mm</Badge>
+                    ) : (
+                      <Badge className="bg-destructive/10 text-destructive">⚠ Volume não confirmado</Badge>
+                    )}
+                    {(contributor as any).willing_to_collaborate && (
+                      <Badge className="bg-accent/10 text-accent">🤝 Disponível para colaborar</Badge>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    {fields.map((field) => (
+                      <div key={field.key} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                        <div className="flex items-center gap-3">
+                          <field.icon className="w-4 h-4 text-muted-foreground" />
+                          <div>
+                            <p className="text-xs text-muted-foreground">{field.label}</p>
+                            {editingField === field.key ? (
+                              field.key === "build_plate_size" ? (
+                                <div className="mt-1 space-y-2">
+                                  <Select value={editBuildPlatePreset || "_"} onValueChange={(v) => setEditBuildPlatePreset(v === "_" ? "" : v)}>
+                                    <SelectTrigger className="h-8 text-sm w-48"><SelectValue placeholder="Tamanho" /></SelectTrigger>
+                                    <SelectContent>
+                                      {BUILD_PLATE_OPTIONS.map((o) => (
+                                        <SelectItem key={o.value || "_"} value={o.value || "_"}>{o.label}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  {editBuildPlatePreset === "outro" && (
+                                    <Input value={editBuildPlateCustom} onChange={(e) => setEditBuildPlateCustom(e.target.value)} placeholder="ex.: 200×200×180" className="h-8 text-sm w-48" />
+                                  )}
+                                  <div className="flex items-center gap-2">
+                                    <button onClick={saveEdit} disabled={saving} className="text-accent hover:text-emerald-light"><Check className="w-4 h-4" /></button>
+                                    <button onClick={() => setEditingField(null)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+                                  </div>
+                                </div>
+                              ) : (
+                              <div className="flex items-center gap-2 mt-1">
+                                <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="h-8 text-sm w-48" autoFocus />
                                 <button onClick={saveEdit} disabled={saving} className="text-accent hover:text-emerald-light"><Check className="w-4 h-4" /></button>
                                 <button onClick={() => setEditingField(null)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
                               </div>
-                            </div>
-                          ) : (
-                          <div className="flex items-center gap-2 mt-1">
-                            <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="h-8 text-sm w-48" autoFocus />
-                            <button onClick={saveEdit} disabled={saving} className="text-accent hover:text-emerald-light"><Check className="w-4 h-4" /></button>
-                            <button onClick={() => setEditingField(null)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+                              )
+                            ) : (
+                              <p className="text-sm font-medium text-foreground">{field.value}</p>
+                            )}
                           </div>
-                          )
-                        ) : (
-                          <p className="text-sm font-medium text-foreground">{field.value}</p>
+                        </div>
+                        {editingField !== field.key && field.key !== "shipping_carrier" && (field as any).editable !== false && (
+                          <button onClick={() => startEdit(field.key, field.value)} className="text-muted-foreground hover:text-accent transition-colors">
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
                         )}
                       </div>
-                    </div>
-                    {editingField !== field.key && field.key !== "shipping_carrier" && (field as any).editable !== false && (
-                      <button onClick={() => startEdit(field.key, field.value)} className="text-muted-foreground hover:text-accent transition-colors">
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-              <h2 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">As Suas Atribuições</h2>
-              {assignedParts.length === 0 ? (
-                <div className="text-center py-8">
-                  <Package className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
-                  <p className="text-muted-foreground text-sm">Sem atribuições ainda? A sua missão aguarda!</p>
-                  <p className="text-muted-foreground/60 text-xs mt-1">Iremos notificá-lo quando encontrarmos uma correspondência.</p>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {assignedParts.map((part) => (
-                    <div key={part.id} className="p-3 bg-muted/30 rounded-xl space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-foreground">{part.part_name}</span>
-                        <Badge className={statusColor[part.status] ?? ""}>
-                          {statusLabels[part.status] ?? part.status}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-                        {part.project_instances?.name && (
-                          <span>Projeto: {part.project_instances.name}</span>
-                        )}
-                        {part.project_instances?.initiatives?.name && (
-                          <span>· {part.project_instances.initiatives.name}</span>
-                        )}
-                        {part.material && (
-                          <Badge variant="secondary" className="text-[10px]">{part.material}</Badge>
-                        )}
-                        {part.category && (
-                          <span>· {part.category}</span>
-                        )}
-                      </div>
-                      {part.file_url && (
-                        <a
-                          href={part.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          Descarregar ficheiro para impressão
-                        </a>
-                      )}
-                      {["assigned", "printing", "printed", "shipped"].includes(part.status) && (
-                        <div className="flex items-center gap-2 pt-1 flex-wrap">
-                          <span className="text-xs text-muted-foreground">Atualizar estado:</span>
-                          {updatingPartId === part.id ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
-                          ) : (
-                            <>
-                              {part.status !== "printing" && (
-                                <button
-                                  onClick={() => updatePartStatus(part.id, "printing")}
-                                  className="text-xs px-2 py-0.5 rounded-full border border-accent text-accent hover:bg-accent/10 transition-colors"
-                                >
-                                  A imprimir
-                                </button>
-                              )}
-                              {part.status !== "printed" && (
-                                <button
-                                  onClick={() => updatePartStatus(part.id, "printed")}
-                                  className="text-xs px-2 py-0.5 rounded-full border border-success text-success hover:bg-success/10 transition-colors"
-                                >
-                                  Impresso
-                                </button>
-                              )}
-                              {part.status !== "shipped" && (
-                                <button
-                                  onClick={() => updatePartStatus(part.id, "shipped")}
-                                  className="text-xs px-2 py-0.5 rounded-full border border-primary text-primary hover:bg-primary/10 transition-colors"
-                                >
-                                  Enviado
-                                </button>
-                              )}
-                            </>
-                          )}
+              </TabsContent>
+
+              <TabsContent value="atribuicoes">
+                <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+                  {assignedParts.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Package className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
+                      <p className="text-muted-foreground text-sm">Sem atribuições ainda? A sua missão aguarda!</p>
+                      <p className="text-muted-foreground/60 text-xs mt-1">Iremos notificá-lo quando encontrarmos uma correspondência.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Active parts grouped by project */}
+                      {activeParts.length > 0 && (
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Atribuições Ativas</h3>
+                          {Object.entries(partsByProject).map(([projectName, parts]) => (
+                            <div key={projectName} className="space-y-2">
+                              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                                {projectName}
+                              </h4>
+                              {parts.map((part) => (
+                                <div key={part.id} className="p-3 bg-muted/30 rounded-xl space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium text-foreground">{part.part_name}</span>
+                                    <Badge className={statusColor[part.status] ?? ""}>
+                                      {statusLabels[part.status] ?? part.status}
+                                    </Badge>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                                    {part.project_instances?.initiatives?.name && (
+                                      <span>{part.project_instances.initiatives.name}</span>
+                                    )}
+                                    {part.material && (
+                                      <Badge variant="secondary" className="text-[10px]">{part.material}</Badge>
+                                    )}
+                                    {part.category && (
+                                      <span>· {part.category}</span>
+                                    )}
+                                  </div>
+                                  {part.file_url && (
+                                    <a
+                                      href={part.file_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
+                                    >
+                                      <Download className="w-3.5 h-3.5" />
+                                      Descarregar ficheiro para impressão
+                                    </a>
+                                  )}
+                                  <div className="flex items-center gap-2 pt-1 flex-wrap">
+                                    <span className="text-xs text-muted-foreground">Atualizar estado:</span>
+                                    {updatingPartId === part.id ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+                                    ) : (
+                                      <>
+                                        {part.status !== "printing" && (
+                                          <button
+                                            onClick={() => updatePartStatus(part.id, "printing")}
+                                            className="text-xs px-2 py-0.5 rounded-full border border-accent text-accent hover:bg-accent/10 transition-colors"
+                                          >
+                                            A imprimir
+                                          </button>
+                                        )}
+                                        {part.status !== "printed" && (
+                                          <button
+                                            onClick={() => updatePartStatus(part.id, "printed")}
+                                            className="text-xs px-2 py-0.5 rounded-full border border-success text-success hover:bg-success/10 transition-colors"
+                                          >
+                                            Impresso
+                                          </button>
+                                        )}
+                                        {part.status !== "shipped" && (
+                                          <button
+                                            onClick={() => updatePartStatus(part.id, "shipped")}
+                                            className="text-xs px-2 py-0.5 rounded-full border border-primary text-primary hover:bg-primary/10 transition-colors"
+                                          >
+                                            Enviado
+                                          </button>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ))}
                         </div>
                       )}
+
+                      {/* Completed parts history - collapsible */}
+                      {completedParts.length > 0 && (
+                        <Collapsible open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+                          <CollapsibleTrigger className="flex items-center justify-between w-full py-2 px-3 bg-muted/20 rounded-lg hover:bg-muted/30 transition-colors">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
+                                Histórico
+                              </h3>
+                              <Badge variant="secondary" className="text-[10px]">
+                                {completedParts.length} {completedParts.length === 1 ? "peça" : "peças"}
+                              </Badge>
+                            </div>
+                            {isHistoryOpen ? (
+                              <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                            )}
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-3 space-y-2">
+                            {completedParts.map((part) => (
+                              <div key={part.id} className="p-3 bg-muted/20 rounded-xl space-y-2 opacity-70">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-foreground">{part.part_name}</span>
+                                  <Badge className={statusColor[part.status] ?? ""}>
+                                    {statusLabels[part.status] ?? part.status}
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                                  {part.project_instances?.name && (
+                                    <span>Projeto: {part.project_instances.name}</span>
+                                  )}
+                                  {part.project_instances?.initiatives?.name && (
+                                    <span>· {part.project_instances.initiatives.name}</span>
+                                  )}
+                                  {part.material && (
+                                    <Badge variant="secondary" className="text-[10px]">{part.material}</Badge>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      )}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
-            </div>
+              </TabsContent>
+            </Tabs>
           </motion.div>
         </div>
       </div>
