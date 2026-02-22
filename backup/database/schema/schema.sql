@@ -78,8 +78,15 @@ CREATE TABLE contributors (
     willing_to_collaborate boolean DEFAULT false NOT NULL,
     printer_models text[],
     build_plate_size text,
-    password_hash text
+    password_hash text,
+    reset_code text,
+    reset_code_expires_at timestamp with time zone,
+    reset_code_attempts integer DEFAULT 0
 );
+
+COMMENT ON COLUMN contributors.reset_code IS 'Temporary 6-digit code for password recovery';
+COMMENT ON COLUMN contributors.reset_code_expires_at IS 'Expiration timestamp for reset code (15 minutes from generation)';
+COMMENT ON COLUMN contributors.reset_code_attempts IS 'Number of failed attempts to verify reset code (max 3)';
 
 -- Wheelchair projects table
 CREATE TABLE wheelchair_projects (

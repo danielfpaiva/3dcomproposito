@@ -235,6 +235,9 @@ export type Database = {
           phone: string | null
           printer_models: string[] | null
           region: string
+          reset_code: string | null
+          reset_code_attempts: number
+          reset_code_expires_at: string | null
           shipping_carrier: string | null
           token: string
           turnaround_time: string | null
@@ -257,6 +260,9 @@ export type Database = {
           phone?: string | null
           printer_models?: string[] | null
           region?: string
+          reset_code?: string | null
+          reset_code_attempts?: number
+          reset_code_expires_at?: string | null
           shipping_carrier?: string | null
           token?: string
           turnaround_time?: string | null
@@ -279,6 +285,9 @@ export type Database = {
           phone?: string | null
           printer_models?: string[] | null
           region?: string
+          reset_code?: string | null
+          reset_code_attempts?: number
+          reset_code_expires_at?: string | null
           shipping_carrier?: string | null
           token?: string
           turnaround_time?: string | null
