@@ -70,6 +70,9 @@ const Portal = () => {
 
       setContributor(data);
 
+      // Save volunteer name to localStorage for Navbar
+      localStorage.setItem("volunteer_name", data.name);
+
       // Fetch assigned parts from new system (project_instance_parts)
       const { data: partsData, error: partsError } = await supabase
         .from("project_instance_parts")

@@ -1,13 +1,43 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Shield, Heart, Accessibility, FileText, LogIn } from "lucide-react";
-import { useState } from "react";
+import { Menu, X, Shield, Heart, Accessibility, FileText, LogIn, LogOut } from "lucide-react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
+
+  // Check if volunteer is logged in (has token in URL or localStorage)
+  const [isVolunteerLoggedIn, setIsVolunteerLoggedIn] = useState(false);
+  const [volunteerName, setVolunteerName] = useState<string>("");
+
+  useEffect(() => {
+    const token = searchParams.get("token") || localStorage.getItem("volunteer_token");
+    const name = localStorage.getItem("volunteer_name");
+
+    if (token && location.pathname === "/portal") {
+      setIsVolunteerLoggedIn(true);
+      setVolunteerName(name || "");
+      // Save token to localStorage for persistence
+      if (searchParams.get("token")) {
+        localStorage.setItem("volunteer_token", token);
+      }
+    } else if (location.pathname !== "/portal") {
+      setIsVolunteerLoggedIn(false);
+    }
+  }, [searchParams, location.pathname]);
+
+  const handleVolunteerLogout = () => {
+    localStorage.removeItem("volunteer_token");
+    localStorage.removeItem("volunteer_name");
+    setIsVolunteerLoggedIn(false);
+    setVolunteerName("");
+    navigate("/");
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-navy-deep/95 backdrop-blur-md border-b border-navy-light/20">
@@ -45,16 +75,29 @@ const Navbar = () => {
               <FileText className="w-3.5 h-3.5 mr-1" /> Recursos
             </Button>
           </Link>
-          <Link to="/portal">
-            <Button variant="ghost" size="sm" className={`text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30 ${isActive("/portal") ? "text-primary-foreground bg-navy-light/20" : ""}`}>
-              <LogIn className="w-3.5 h-3.5 mr-1" /> Entrar
+          {isVolunteerLoggedIn ? (
+            <Button
+              onClick={handleVolunteerLogout}
+              variant="ghost"
+              size="sm"
+              className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30"
+            >
+              <LogOut className="w-3.5 h-3.5 mr-1" /> Sair
             </Button>
-          </Link>
-          <Link to="/contribute">
-            <Button size="sm" className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
-              Juntar-me à Missão
-            </Button>
-          </Link>
+          ) : (
+            <>
+              <Link to="/portal">
+                <Button variant="ghost" size="sm" className={`text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30 ${isActive("/portal") ? "text-primary-foreground bg-navy-light/20" : ""}`}>
+                  <LogIn className="w-3.5 h-3.5 mr-1" /> Entrar
+                </Button>
+              </Link>
+              <Link to="/contribute">
+                <Button size="sm" className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
+                  Juntar-me à Missão
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
         <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden text-primary-foreground/70 hover:text-primary-foreground">
@@ -89,14 +132,29 @@ const Navbar = () => {
                   <FileText className="w-4 h-4 mr-2" /> Recursos
                 </Button>
               </Link>
-              <Link to="/portal" onClick={() => setMobileOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30">
-                  <LogIn className="w-4 h-4 mr-2" /> Entrar
+              {isVolunteerLoggedIn ? (
+                <Button
+                  onClick={() => {
+                    handleVolunteerLogout();
+                    setMobileOpen(false);
+                  }}
+                  variant="ghost"
+                  className="w-full justify-start text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30"
+                >
+                  <LogOut className="w-4 h-4 mr-2" /> Sair
                 </Button>
-              </Link>
-              <Link to="/contribute" onClick={() => setMobileOpen(false)}>
-                <Button className="w-full bg-accent text-accent-foreground hover:bg-emerald-light font-semibold">Juntar-me à Missão</Button>
-              </Link>
+              ) : (
+                <>
+                  <Link to="/portal" onClick={() => setMobileOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30">
+                      <LogIn className="w-4 h-4 mr-2" /> Entrar
+                    </Button>
+                  </Link>
+                  <Link to="/contribute" onClick={() => setMobileOpen(false)}>
+                    <Button className="w-full bg-accent text-accent-foreground hover:bg-emerald-light font-semibold">Juntar-me à Missão</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </motion.div>
         )}
