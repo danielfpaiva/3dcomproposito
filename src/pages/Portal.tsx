@@ -338,7 +338,7 @@ const Portal = () => {
               <p className="text-muted-foreground">O seu perfil de missão e atribuições</p>
             </div>
 
-            <Tabs defaultValue="dados" className="w-full">
+            <Tabs defaultValue="atribuicoes" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="dados" className="flex items-center gap-2">
                   <User className="w-4 h-4" />
