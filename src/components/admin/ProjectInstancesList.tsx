@@ -5,13 +5,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Loader2, ChevronRight, ChevronLeft, Package } from "lucide-react";
+import { Plus, Loader2, ChevronRight, ChevronLeft, Package, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -156,6 +166,9 @@ const ProjectInstancesList = () => {
   const [newRequestId, setNewRequestId] = useState("");
   const [creating, setCreating] = useState(false);
   const [updatingPartId, setUpdatingPartId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<ProjectInstance | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Fetch initiatives (for dropdown)
   const { data: initiatives = [] } = useQuery({
@@ -357,6 +370,55 @@ const ProjectInstancesList = () => {
     queryClient.invalidateQueries({ queryKey: ["beneficiary-requests"] });
   };
 
+  // Delete project
+  const handleDeleteProject = async () => {
+    if (!projectToDelete) return;
+
+    setDeleting(true);
+
+    // Delete all parts first (CASCADE should handle this, but being explicit)
+    const { error: partsError } = await supabase
+      .from("project_instance_parts")
+      .delete()
+      .eq("project_instance_id", projectToDelete.id);
+
+    if (partsError) {
+      toast({ title: "Erro ao apagar peças", description: partsError.message, variant: "destructive" });
+      setDeleting(false);
+      return;
+    }
+
+    // Delete the project
+    const { error: projectError } = await supabase
+      .from("project_instances")
+      .delete()
+      .eq("id", projectToDelete.id);
+
+    if (projectError) {
+      toast({ title: "Erro ao apagar projeto", description: projectError.message, variant: "destructive" });
+      setDeleting(false);
+      return;
+    }
+
+    // Update request status back to pending if it was linked
+    if (projectToDelete.request_id) {
+      await supabase
+        .from("beneficiary_requests")
+        .update({ status: "pendente" })
+        .eq("id", projectToDelete.request_id);
+    }
+
+    toast({ title: "Projeto apagado!", description: `${projectToDelete.name} foi removido com sucesso.` });
+    queryClient.invalidateQueries({ queryKey: ["project-instances"] });
+    queryClient.invalidateQueries({ queryKey: ["beneficiary-requests"] });
+    queryClient.invalidateQueries({ queryKey: ["open-requests"] });
+
+    setDeleteDialogOpen(false);
+    setProjectToDelete(null);
+    setSelectedId(null);
+    setDeleting(false);
+  };
+
   // Assign contributor to part
   const handleAssignPart = async (partId: string, contributorId: string | null) => {
     setUpdatingPartId(partId);
@@ -470,7 +532,20 @@ const ProjectInstancesList = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    <ResendAllocationEmails projectId={selectedProject.id} projectName={selectedProject.name} />
+                    <div className="flex items-center gap-2">
+                      <ResendAllocationEmails projectId={selectedProject.id} projectName={selectedProject.name} />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setProjectToDelete(selectedProject);
+                          setDeleteDialogOpen(true);
+                        }}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {selectedProject.initiatives?.name} · {parts.filter((p) => p.status !== "unassigned").length}/{parts.length} peças atribuídas ·{" "}
@@ -620,6 +695,43 @@ const ProjectInstancesList = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Project AlertDialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar Projeto</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem a certeza que pretende apagar o projeto <strong>{projectToDelete?.name}</strong>?
+              <br /><br />
+              Esta ação irá apagar:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>O projeto e todas as suas peças</li>
+                <li>Todas as atribuições de voluntários</li>
+              </ul>
+              <br />
+              {projectToDelete?.request_id && (
+                <span className="text-amber-600">
+                  ⚠️ O pedido de beneficiário associado voltará ao estado "Pendente".
+                </span>
+              )}
+              <br /><br />
+              <strong className="text-destructive">Esta ação não pode ser revertida.</strong>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteProject}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+              Apagar Projeto
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
