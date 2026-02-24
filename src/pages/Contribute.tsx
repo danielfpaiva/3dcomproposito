@@ -105,6 +105,12 @@ const Contribute = () => {
     if (suggested) setFormData((prev) => ({ ...prev, buildPlateSize: suggested }));
   }, [formData.printers, formData.otherPrinter]);
 
+  const isValidEmail = (email: string): boolean => {
+    // Regex pattern for valid email format
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailPattern.test(email.trim());
+  };
+
   const canProceed = () => {
     switch (currentStep) {
       case 1: return formData.name.trim().length > 0;
@@ -114,7 +120,7 @@ const Contribute = () => {
       case 5: return formData.experienceLevel.length > 0;
       case 6: return formData.availability.length > 0;
       case 7: return true;
-      case 8: return formData.email.includes("@");
+      case 8: return isValidEmail(formData.email);
       default: return false;
     }
   };
@@ -511,7 +517,21 @@ const Contribute = () => {
                       <Label className="text-base font-bold text-foreground">Ative a sua contribuição</Label>
                       <p className="text-sm text-muted-foreground mt-1 mb-3">Introduza o seu email para receber o seu link único de voluntário e atribuições de projetos.</p>
                     </div>
-                    <Input type="email" placeholder="o.seu.email@exemplo.com" value={formData.email} onChange={(e) => updateField("email", e.target.value)} className="text-base py-5" autoFocus />
+                    <div>
+                      <Input
+                        type="email"
+                        placeholder="o.seu.email@exemplo.com"
+                        value={formData.email}
+                        onChange={(e) => updateField("email", e.target.value)}
+                        className={`text-base py-5 ${formData.email && !isValidEmail(formData.email) ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                        autoFocus
+                      />
+                      {formData.email && !isValidEmail(formData.email) && (
+                        <p className="text-sm text-destructive mt-1">
+                          Por favor, introduza um email válido (ex: nome@exemplo.com)
+                        </p>
+                      )}
+                    </div>
                     <Input type="tel" placeholder="Telefone (opcional)" value={formData.phone} onChange={(e) => updateField("phone", e.target.value)} className="text-base py-5" />
                   </div>
                 )}
