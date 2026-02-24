@@ -150,7 +150,19 @@ const Contribute = () => {
     } as any).select("id, token").single();
 
     if (error) {
-      toast({ title: "Erro ao submeter", description: error.message, variant: "destructive" });
+      // Check if it's a duplicate email error
+      const isDuplicateEmail = error.message.includes("duplicate key value") && error.message.includes("contributors_email_unique");
+
+      if (isDuplicateEmail) {
+        toast({
+          title: "Email já registado",
+          description: `O email ${formData.email} já está registado. Se já é voluntário, pode aceder ao seu portal em "Entrar". Se esqueceu a sua password, pode recuperá-la no portal.`,
+          variant: "destructive",
+          duration: 8000,
+        });
+      } else {
+        toast({ title: "Erro ao submeter", description: error.message, variant: "destructive" });
+      }
       setSubmitting(false);
       return;
     }
