@@ -1,11 +1,11 @@
-# 📦 Backup e Documentação - 3D com Propósito
+# 📦 Backup da Base de Dados - 3D com Propósito
 
-Esta pasta contém backups da base de dados, documentação técnica, queries úteis e scripts relacionados com o projeto 3D com Propósito (anteriormente Impact Print Connect).
+Esta pasta contém backups da base de dados, schemas, queries úteis e scripts relacionados com o projeto 3D com Propósito (anteriormente Impact Print Connect).
 
 ## 📂 Estrutura Organizada
 
 ```
-backup/
+backup/database/
 ├── README.md (este ficheiro)
 │
 ├── database/                       # Tudo relacionado com base de dados
