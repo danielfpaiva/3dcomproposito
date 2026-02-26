@@ -7,7 +7,12 @@
       "Bash(curl -s -L \"https://drive.google.com/uc?export=download&id=1X6rFgRb9ZzxqttZouy1mmOn9PZKaQ3WA\" -o test_wheel_rim.3mf --max-time 10)",
       "Bash(curl -s -L \"https://drive.google.com/uc?export=download&id=1AmbM6DuPfv1l3mgv1S2-Wk7gZXFYQLrr\" -o test_tires.3mf --max-time 10)",
       "Bash(npx supabase functions deploy notify-part-allocated --project-ref bsbqmqfznkozqagdhvoj)",
-      "Bash(git add supabase/functions/notify-part-allocated/index.ts backup/database/migrations/005_fix_organizer_rls_policies.sql .claude/)"
+      "Bash(git add supabase/functions/notify-part-allocated/index.ts backup/database/migrations/005_fix_organizer_rls_policies.sql .claude/)",
+      "Bash(git commit -m \"feat: add print settings warning to allocation email and update file URLs\n\nEdge Function (notify-part-allocated):\n- Added yellow warning box about print settings (infill, walls, layer height)\n- Warns volunteers not to change settings defined by creator\n- Ensures structural integrity and safety of printed parts\n\nDatabase Updates:\n- Updated 6 initiative_parts records with new Google Drive URLs\n- WHEEL RIM (4 parts): new file_url with corrected profiles\n- TIRES (2 parts): new file_url with corrected profiles\n- Links tested and verified working (download format)\n\nMigration 005:\n- Fix organizer RLS policies\n\nConfig:\n- Added .claude/ configuration for project\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
+      "Bash(git add supabase/functions/notify-part-allocated/index.ts src/pages/Portal.tsx)",
+      "Bash(git commit -m \"feat: add Smart3D shipping information to email and portal\n\nEmail (notify-part-allocated):\n- Updated step 4: ''envie a peça para a Smart3D'' (previously ''coordenador'')\n\nPortal (Portal.tsx):\n- Added amber info box in ''Atribuições Ativas'' section\n- Clear message: parts should be sent to Smart3D when ready\n- Visible to all volunteers with active assignments\n\nThis clarifies the shipping destination for volunteers.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
+      "Bash(cat .gitignore)",
+      "Bash(git add .claude/settings.local.json)"
     ],
     "deny": [],
     "ask": []
