@@ -617,6 +617,11 @@ const Portal = () => {
                       {activeParts.length > 0 && (
                         <div className="space-y-4">
                           <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Atribuições Ativas</h3>
+                          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+                            <p className="text-amber-900">
+                              <strong>📦 Envio de peças:</strong> Quando as peças estiverem prontas, devem ser enviadas para a <strong>Smart3D</strong>.
+                            </p>
+                          </div>
                           {Object.entries(partsByProject).map(([projectName, parts]) => (
                             <div key={projectName} className="space-y-2">
                               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">

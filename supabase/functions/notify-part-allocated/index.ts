@@ -164,7 +164,7 @@ Deno.serve(async (req) => {
       <li>Descarregue o ficheiro de cada peça pelo link acima</li>
       <li>Imprima a peça com as especificações indicadas</li>
       <li>Aceda ao portal e atualize o estado da peça</li>
-      <li>Quando estiver pronto, envie a peça para o coordenador</li>
+      <li>Quando estiver pronto, envie a peça para a <strong>Smart3D</strong></li>
     </ol>
 
     <p style="margin-top: 30px;"><strong>Obrigado por fazeres parte desta causa!</strong> 💚</p>
