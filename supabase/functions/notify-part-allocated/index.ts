@@ -146,6 +146,19 @@ Deno.serve(async (req) => {
       </p>
     </div>
 
+    <div style="background: #fef3c7; padding: 15px; border-left: 4px solid #f59e0b; margin: 20px 0; border-radius: 0 8px 8px 0;">
+      <h3 style="margin-top: 0; font-size: 15px; color: #92400e;">⚠️ Importante — Configurações de Impressão</h3>
+      <p style="margin: 0; font-size: 14px; color: #78350f;">
+        <strong>Respeite as configurações definidas no ficheiro 3MF/STL pelo criador:</strong>
+        <br/>• <strong>Infill (enchimento)</strong>
+        <br/>• <strong>Walls (paredes/perímetros)</strong>
+        <br/>• <strong>Layer height (altura de camada)</strong>
+        <br/>• <strong>Outros parâmetros estruturais</strong>
+        <br/><br/>
+        Estas configurações garantem a resistência e segurança da peça. <strong>Não as altere</strong> sem autorização do coordenador.
+      </p>
+    </div>
+
     <h3 style="font-size: 15px; color: #1f2937;">📋 Próximos Passos:</h3>
     <ol style="line-height: 2;">
       <li>Descarregue o ficheiro de cada peça pelo link acima</li>

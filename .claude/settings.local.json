@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk '{print $5, $9}')",
+      "Bash(curl -L -I \"https://drive.google.com/uc?export=download&id=1X6rFgRb9ZzxqttZouy1mmOn9PZKaQ3WA\")",
+      "Bash(curl -L -I \"https://drive.google.com/uc?export=download&id=1AmbM6DuPfv1l3mgv1S2-Wk7gZXFYQLrr\")",
+      "Bash(curl -s -L \"https://drive.google.com/uc?export=download&id=1X6rFgRb9ZzxqttZouy1mmOn9PZKaQ3WA\" -o test_wheel_rim.3mf --max-time 10)",
+      "Bash(curl -s -L \"https://drive.google.com/uc?export=download&id=1AmbM6DuPfv1l3mgv1S2-Wk7gZXFYQLrr\" -o test_tires.3mf --max-time 10)",
+      "Bash(npx supabase functions deploy notify-part-allocated --project-ref bsbqmqfznkozqagdhvoj)",
+      "Bash(git add supabase/functions/notify-part-allocated/index.ts backup/database/migrations/005_fix_organizer_rls_policies.sql .claude/)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
