@@ -7,8 +7,7 @@ const ProgressSection = () => {
 
   const completed = stats?.wheelchairs_completed ?? 0;
   const totalRequests = stats?.total_requests ?? 0;
-  const target = totalRequests || 10; // Use total_requests, fallback to 10 if zero
-  const percent = target > 0 ? Math.round((completed / target) * 100) : 0;
+  const percent = totalRequests > 0 ? Math.round((completed / totalRequests) * 100) : 0;
 
   return (
     <section className="py-20 px-6 bg-muted/50">
@@ -24,7 +23,7 @@ const ProgressSection = () => {
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Cadeiras Concluídas</p>
                 <p className="text-4xl font-black text-foreground">
-                  {completed} <span className="text-lg font-medium text-muted-foreground">/ {target}</span>
+                  {completed} <span className="text-lg font-medium text-muted-foreground">/ {totalRequests}</span>
                 </p>
               </div>
               <span className="text-2xl font-bold text-accent">{percent}%</span>
