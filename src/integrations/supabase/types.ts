@@ -507,6 +507,7 @@ export type Database = {
           total_donations: number | null
           total_parts: number | null
           total_projects: number | null
+          total_requests: number | null
           wheelchairs_completed: number | null
         }
         Relationships: []
