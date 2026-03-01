@@ -5,10 +5,23 @@ import { useDashboardStats } from "@/hooks/useDashboardStats";
 const ProgressSection = () => {
   const { data: stats } = useDashboardStats();
 
+  console.log('📊 ProgressSection - Raw stats from API:', stats);
+  console.log('📊 ProgressSection - total_requests:', stats?.total_requests);
+  console.log('📊 ProgressSection - wheelchairs_completed:', stats?.wheelchairs_completed);
+  console.log('📊 ProgressSection - parts_in_progress:', stats?.parts_in_progress);
+  console.log('📊 ProgressSection - total_parts:', stats?.total_parts);
+  console.log('📊 ProgressSection - parts_completed:', stats?.parts_completed);
+
   const completed = stats?.wheelchairs_completed ?? 0;
   const totalRequests = stats?.total_requests ?? 0;
   const target = Math.max(totalRequests, 10);
   const percent = target > 0 ? Math.round((completed / target) * 100) : 0;
+
+  console.log('📊 ProgressSection - Calculated values:');
+  console.log('  completed:', completed);
+  console.log('  totalRequests:', totalRequests);
+  console.log('  target:', target);
+  console.log('  percent:', percent);
 
   return (
     <section className="py-20 px-6 bg-muted/50">
