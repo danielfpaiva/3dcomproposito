@@ -434,6 +434,7 @@ const ProjectInstancesList = () => {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       queryClient.invalidateQueries({ queryKey: ["project-instance-parts", selectedId] });
+      queryClient.invalidateQueries({ queryKey: ["allocated-contributor-ids", selectedId] });
       if (contributorId) {
         // Send email notification
         const { error: emailError } = await supabase.functions.invoke("notify-part-allocated", {
