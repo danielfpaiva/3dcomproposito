@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Loader2, ChevronRight, ChevronLeft, Package, Trash2 } from "lucide-react";
+import { Plus, Loader2, ChevronRight, ChevronLeft, Package, Trash2, Pencil, Check, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -169,6 +169,8 @@ const ProjectInstancesList = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<ProjectInstance | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editingProjectName, setEditingProjectName] = useState(false);
+  const [editedProjectName, setEditedProjectName] = useState("");
 
   // Fetch initiatives (for dropdown)
   const { data: initiatives = [] } = useQuery({
@@ -466,6 +468,23 @@ const ProjectInstancesList = () => {
     setUpdatingPartId(null);
   };
 
+  const handleUpdateProjectName = async () => {
+    if (!selectedProject || !editedProjectName.trim()) return;
+
+    const { error } = await supabase
+      .from("project_instances")
+      .update({ name: editedProjectName.trim() })
+      .eq("id", selectedProject.id);
+
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } else {
+      queryClient.invalidateQueries({ queryKey: ["project-instances"] });
+      setEditingProjectName(false);
+      toast({ title: "Nome atualizado", description: "O nome do projeto foi alterado com sucesso." });
+    }
+  };
+
   // --- LAYOUT: side-by-side (list + detail) ---
   return (
     <div className="space-y-6">
@@ -518,7 +537,39 @@ const ProjectInstancesList = () => {
                 <div className="flex-1">
                   <div className="flex items-center justify-between gap-3 mb-1">
                     <div className="flex items-center gap-3">
-                      <h3 className="text-lg font-bold text-foreground">{selectedProject.name}</h3>
+                      {editingProjectName ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={editedProjectName}
+                            onChange={(e) => setEditedProjectName(e.target.value)}
+                            className="h-8"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleUpdateProjectName();
+                              if (e.key === "Escape") setEditingProjectName(false);
+                            }}
+                          />
+                          <Button size="sm" variant="ghost" onClick={handleUpdateProjectName}>
+                            <Check className="w-4 h-4 text-green-600" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingProjectName(false)}>
+                            <X className="w-4 h-4 text-red-600" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-bold text-foreground">{selectedProject.name}</h3>
+                          <button
+                            onClick={() => {
+                              setEditedProjectName(selectedProject.name);
+                              setEditingProjectName(true);
+                            }}
+                            className="text-muted-foreground hover:text-accent transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
                       <Select
                         value={selectedProject.status}
                         onValueChange={(v) => handleProjectStatusChange(selectedProject.id, v)}
