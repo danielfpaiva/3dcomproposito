@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Loader2, ChevronRight, ChevronLeft, Package, Trash2, Pencil, Check, X } from "lucide-react";
+import { Plus, Loader2, ChevronRight, ChevronLeft, Package, Trash2, Pencil, Check, X, Bell } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -171,6 +171,7 @@ const ProjectInstancesList = () => {
   const [deleting, setDeleting] = useState(false);
   const [editingProjectName, setEditingProjectName] = useState(false);
   const [editedProjectName, setEditedProjectName] = useState("");
+  const [sendingReminders, setSendingReminders] = useState(false);
 
   // Fetch initiatives (for dropdown)
   const { data: initiatives = [] } = useQuery({
@@ -253,6 +254,28 @@ const ProjectInstancesList = () => {
       if (error) throw error;
       // Return unique IDs
       return [...new Set(data.map((p) => p.assigned_contributor_id!))];
+    },
+    enabled: !!selectedId,
+  });
+
+  // Fetch part count per contributor in selected project
+  const { data: contributorPartCounts = {} } = useQuery({
+    queryKey: ["contributor-part-counts", selectedId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_instance_parts")
+        .select("assigned_contributor_id")
+        .eq("project_instance_id", selectedId!)
+        .not("assigned_contributor_id", "is", null);
+      if (error) throw error;
+      // Count parts per contributor
+      const counts: Record<string, number> = {};
+      data.forEach((p) => {
+        if (p.assigned_contributor_id) {
+          counts[p.assigned_contributor_id] = (counts[p.assigned_contributor_id] || 0) + 1;
+        }
+      });
+      return counts;
     },
     enabled: !!selectedId,
   });
@@ -437,6 +460,7 @@ const ProjectInstancesList = () => {
     } else {
       queryClient.invalidateQueries({ queryKey: ["project-instance-parts", selectedId] });
       queryClient.invalidateQueries({ queryKey: ["allocated-contributor-ids", selectedId] });
+      queryClient.invalidateQueries({ queryKey: ["contributor-part-counts", selectedId] });
       if (contributorId) {
         // Send email notification
         const { error: emailError } = await supabase.functions.invoke("notify-part-allocated", {
@@ -482,6 +506,40 @@ const ProjectInstancesList = () => {
       queryClient.invalidateQueries({ queryKey: ["project-instances"] });
       setEditingProjectName(false);
       toast({ title: "Nome atualizado", description: "O nome do projeto foi alterado com sucesso." });
+    }
+  };
+
+  const handleSendReminders = async () => {
+    if (!selectedProject) return;
+
+    setSendingReminders(true);
+
+    try {
+      const { error } = await supabase.functions.invoke("send-reminder-assigned-parts", {
+        body: { project_id: selectedProject.id },
+        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+      });
+
+      if (error) {
+        toast({
+          title: "Erro ao enviar lembretes",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Lembretes enviados!",
+          description: "Os emails de lembrete foram enviados para todos os voluntários com peças atribuídas.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Falha ao invocar a função de email.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingReminders(false);
     }
   };
 
@@ -589,6 +647,19 @@ const ProjectInstancesList = () => {
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={handleSendReminders}
+                        disabled={sendingReminders}
+                        title="Enviar lembrete para voluntários com peças atribuídas"
+                      >
+                        {sendingReminders ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Bell className="w-3.5 h-3.5" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => {
                           setProjectToDelete(selectedProject);
                           setDeleteDialogOpen(true);
@@ -669,6 +740,7 @@ const ProjectInstancesList = () => {
                                 contributors={contributors}
                                 onAssign={(contributorId) => handleAssignPart(part.id, contributorId)}
                                 allocatedContributorIds={allocatedContributorIds}
+                                contributorPartCounts={contributorPartCounts}
                               />
                             )}
                           </td>
