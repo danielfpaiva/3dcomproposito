@@ -649,7 +649,7 @@ const ProjectInstancesList = () => {
                         size="sm"
                         onClick={handleSendReminders}
                         disabled={sendingReminders}
-                        title="Enviar lembrete para voluntários com peças atribuídas"
+                        title="Enviar lembrete"
                       >
                         {sendingReminders ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
