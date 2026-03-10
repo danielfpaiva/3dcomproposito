@@ -515,7 +515,7 @@ const ProjectInstancesList = () => {
     setSendingReminders(true);
 
     try {
-      const { error } = await supabase.functions.invoke("send-reminder-assigned-parts", {
+      const { data, error } = await supabase.functions.invoke("send-reminder-assigned-parts", {
         body: { project_id: selectedProject.id },
         headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
       });
@@ -523,19 +523,27 @@ const ProjectInstancesList = () => {
       if (error) {
         toast({
           title: "Erro ao enviar lembretes",
-          description: error.message,
+          description: error.message || "Falha ao comunicar com a Edge Function",
           variant: "destructive",
         });
-      } else {
-        toast({
-          title: "Lembretes enviados!",
-          description: "Os emails de lembrete foram enviados para todos os voluntários com peças atribuídas.",
-        });
+      } else if (data?.message) {
+        // Check if there were parts to send
+        if (data.message.includes("No parts")) {
+          toast({
+            title: "Nenhum lembrete enviado",
+            description: "Não há peças com estado 'Atribuído' neste projeto.",
+          });
+        } else {
+          toast({
+            title: "Lembretes enviados!",
+            description: "Os emails de lembrete foram enviados para todos os voluntários com peças atribuídas.",
+          });
+        }
       }
     } catch (error) {
       toast({
         title: "Erro",
-        description: "Falha ao invocar a função de email.",
+        description: error instanceof Error ? error.message : "Falha ao invocar a função de email.",
         variant: "destructive",
       });
     } finally {
