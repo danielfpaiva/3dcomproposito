@@ -172,17 +172,10 @@ const AllocateVolunteerDialog = ({
     queryClient.invalidateQueries({ queryKey: ["admin-parts"] });
     queryClient.invalidateQueries({ queryKey: ["admin-projects"] });
 
-    // Send email notification
-    const { error: emailError } = await supabase.functions.invoke("notify-part-allocated", {
-      body: { contributor_id: contributor.id, part_ids: partIds },
-      headers: {
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-      },
+    toast({
+      title: "Atribuição guardada",
+      description: `${selectedPartIds.size} peça(s) atribuída(s) a ${contributor.name}`,
     });
-    if (emailError) {
-      console.error("notify-part-allocated error:", emailError);
-      toast({ title: "Aviso", description: "Atribuição guardada mas o email não foi enviado: " + emailError.message, variant: "destructive" });
-    }
 
     setSaving(false);
     setAllocated(true);

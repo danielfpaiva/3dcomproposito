@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Loader2, ChevronRight, ChevronLeft, Package, Trash2, Pencil, Check, X, Bell } from "lucide-react";
+import { Plus, Loader2, ChevronRight, ChevronLeft, Package, Trash2, Pencil, Check, X, Bell, Send } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +30,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import PartAssignmentSelect from "./PartAssignmentSelect";
-import { ResendAllocationEmails } from "./ResendAllocationEmails";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Initiative = Tables<"initiatives">;
@@ -172,6 +171,7 @@ const ProjectInstancesList = () => {
   const [editingProjectName, setEditingProjectName] = useState(false);
   const [editedProjectName, setEditedProjectName] = useState("");
   const [sendingReminders, setSendingReminders] = useState(false);
+  const [sendingNotifications, setSendingNotifications] = useState(false);
 
   // Fetch initiatives (for dropdown)
   const { data: initiatives = [] } = useQuery({
@@ -461,18 +461,11 @@ const ProjectInstancesList = () => {
       queryClient.invalidateQueries({ queryKey: ["project-instance-parts", selectedId] });
       queryClient.invalidateQueries({ queryKey: ["allocated-contributor-ids", selectedId] });
       queryClient.invalidateQueries({ queryKey: ["contributor-part-counts", selectedId] });
-      if (contributorId) {
-        // Send email notification
-        const { error: emailError } = await supabase.functions.invoke("notify-part-allocated", {
-          body: { contributor_id: contributorId, part_ids: [partId] },
-          headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
-        });
-        if (emailError) {
-          toast({ title: "Aviso", description: "Voluntário atribuído mas o email não foi enviado: " + emailError.message, variant: "destructive" });
-        } else {
-          toast({ title: "Voluntário atribuído", description: "Email de notificação enviado." });
-        }
-      }
+
+      toast({
+        title: contributorId ? "Voluntário atribuído" : "Atribuição removida",
+        description: contributorId ? "Peça atribuída com sucesso." : "Voluntário removido da peça.",
+      });
     }
     setUpdatingPartId(null);
   };
@@ -549,6 +542,85 @@ const ProjectInstancesList = () => {
     } finally {
       setSendingReminders(false);
     }
+  };
+
+  const handleNotifyVolunteers = async () => {
+    if (!selectedProject) return;
+
+    // Buscar peças com status "assigned" no projeto atual
+    const assignedParts = parts.filter(
+      (p) => p.status === "assigned" && p.assigned_contributor_id
+    );
+
+    if (assignedParts.length === 0) {
+      toast({
+        title: "Nenhuma peça atribuída",
+        description: "Não há peças com estado 'Atribuído' neste projeto.",
+      });
+      return;
+    }
+
+    // Agrupar por voluntário
+    const grouped = assignedParts.reduce((acc: Record<string, string[]>, part) => {
+      const contributorId = part.assigned_contributor_id!;
+      if (!acc[contributorId]) {
+        acc[contributorId] = [];
+      }
+      acc[contributorId].push(part.id);
+      return acc;
+    }, {});
+
+    const allocations = Object.entries(grouped);
+    const volunteerCount = allocations.length;
+    const totalParts = assignedParts.length;
+
+    // Confirmar com o usuário
+    const confirmed = window.confirm(
+      `Enviar notificações para ${volunteerCount} voluntário(s)?\n\n` +
+      `Total de ${totalParts} peça(s) atribuída(s).\n\n` +
+      `Os emails serão agrupados por voluntário.`
+    );
+
+    if (!confirmed) return;
+
+    setSendingNotifications(true);
+    let successCount = 0;
+    let failedCount = 0;
+
+    for (let i = 0; i < allocations.length; i++) {
+      const [contributorId, partIds] = allocations[i];
+
+      try {
+        const { error } = await supabase.functions.invoke("notify-part-allocated", {
+          body: { contributor_id: contributorId, part_ids: partIds },
+          headers: {
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+        });
+
+        if (error) {
+          console.error(`Failed for contributor ${contributorId}:`, error);
+          failedCount++;
+        } else {
+          successCount++;
+        }
+      } catch (err) {
+        console.error(`Exception for contributor ${contributorId}:`, err);
+        failedCount++;
+      }
+
+      // Delay 1s entre emails para evitar rate limiting
+      if (i < allocations.length - 1) {
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+    }
+
+    setSendingNotifications(false);
+    toast({
+      title: "Notificações enviadas!",
+      description: `✅ ${successCount} enviados, ❌ ${failedCount} falharam`,
+      variant: successCount > 0 ? "default" : "destructive",
+    });
   };
 
   // --- LAYOUT: side-by-side (list + detail) ---
@@ -651,7 +723,21 @@ const ProjectInstancesList = () => {
                       </Select>
                     </div>
                     <div className="flex items-center gap-2">
-                      <ResendAllocationEmails projectId={selectedProject.id} projectName={selectedProject.name} />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleNotifyVolunteers}
+                        disabled={sendingNotifications || parts.filter((p) => p.status === "assigned").length === 0}
+                        title="Enviar emails de notificação para voluntários com peças atribuídas"
+                        className="gap-1.5"
+                      >
+                        {sendingNotifications ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Send className="w-3.5 h-3.5" />
+                        )}
+                        Notificar
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
