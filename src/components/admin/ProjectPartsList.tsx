@@ -42,7 +42,7 @@ const statusOptions = [
   { value: "printing", label: "A imprimir" },
   { value: "printed", label: "Impresso" },
   { value: "shipped", label: "Enviado" },
-  { value: "complete", label: "Concluído" },
+  { value: "complete", label: "Recebido" },
 ];
 
 const statusColor: Record<string, string> = {

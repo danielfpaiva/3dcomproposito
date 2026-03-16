@@ -70,7 +70,7 @@ const partStatusLabels: Record<string, string> = {
   printing: "A imprimir",
   printed: "Impresso",
   shipped: "Enviado",
-  complete: "Concluído",
+  complete: "Recebido",
 };
 
 const partStatusColors: Record<string, string> = {

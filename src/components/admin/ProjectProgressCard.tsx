@@ -104,7 +104,7 @@ const ProjectProgressCard = ({ project, parts, onSelect, isSelected }: ProjectPr
             <SelectContent>
               <SelectItem value="planning">Planeamento</SelectItem>
               <SelectItem value="active">Ativo</SelectItem>
-              <SelectItem value="complete">Concluído</SelectItem>
+              <SelectItem value="complete">Recebido</SelectItem>
             </SelectContent>
           </Select>
           <AlertDialog>
