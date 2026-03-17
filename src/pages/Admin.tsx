@@ -11,6 +11,7 @@ import {
   Printer, Users, Target, LogOut, Plus, Loader2,
   BarChart3, Package, Heart, Accessibility, Link2, Eye,
   ArrowUpDown, ChevronUp, ChevronDown, Layers, UserX, UserCheck,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 import {
   Dialog,
@@ -94,6 +95,8 @@ const Admin = () => {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [groupBy, setGroupBy] = useState<"none" | "region" | "experience" | "can_ship">("region");
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -180,6 +183,19 @@ const Admin = () => {
     });
     return list;
   }, [filteredContributors, sortKey, sortDir]);
+
+  const totalPages = Math.ceil(sortedContributors.length / itemsPerPage);
+
+  const paginatedContributors = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return sortedContributors.slice(startIndex, endIndex);
+  }, [sortedContributors, currentPage, itemsPerPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterSearch, filterRegion, filterPrinter, filterMaterial, filterExperience, filterBuildVolume, filterCanShip]);
 
   const regionOrder = ["norte", "centro", "lisboa", "alentejo", "algarve", "acores", "madeira"];
   const regionNames: Record<string, string> = { norte: "Norte", centro: "Centro", lisboa: "Lisboa", alentejo: "Alentejo", algarve: "Algarve", acores: "Açores", madeira: "Madeira" };
@@ -423,7 +439,7 @@ const Admin = () => {
                         );
 
                         if (groupBy === "none") {
-                          return sortedContributors.map(renderRow);
+                          return paginatedContributors.map(renderRow);
                         }
 
                         const grouped = sortedContributors.reduce<Record<string, typeof sortedContributors>>((acc, c) => {
@@ -475,6 +491,58 @@ const Admin = () => {
                     </p>
                   )}
                 </div>
+
+                {/* Pagination Controls - Only show when groupBy is "none" and there are results */}
+                {groupBy === "none" && sortedContributors.length > 0 && (
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>
+                        Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, sortedContributors.length)} de {sortedContributors.length} voluntários
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(1)}
+                        disabled={currentPage === 1}
+                        className="h-8"
+                      >
+                        Primeira
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="h-8 w-8"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <span className="text-sm font-medium px-2">
+                        Página {currentPage} de {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="h-8 w-8"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(totalPages)}
+                        disabled={currentPage === totalPages}
+                        className="h-8"
+                      >
+                        Última
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
