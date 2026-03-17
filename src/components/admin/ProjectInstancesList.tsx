@@ -260,14 +260,13 @@ const ProjectInstancesList = () => {
     enabled: !!selectedId,
   });
 
-  // Fetch part count per contributor in selected project
+  // Fetch TOTAL part count per contributor across ALL projects (not just current project)
   const { data: contributorPartCounts = {} } = useQuery({
-    queryKey: ["contributor-part-counts", selectedId],
+    queryKey: ["contributor-part-counts-global"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("project_instance_parts")
         .select("assigned_contributor_id")
-        .eq("project_instance_id", selectedId!)
         .not("assigned_contributor_id", "is", null);
       if (error) throw error;
       // Count parts per contributor
@@ -279,7 +278,6 @@ const ProjectInstancesList = () => {
       });
       return counts;
     },
-    enabled: !!selectedId,
   });
 
   const selectedProject = projects.find((p) => p.id === selectedId);
