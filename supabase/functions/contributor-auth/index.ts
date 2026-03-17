@@ -146,11 +146,12 @@ serve(async (req) => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Look up contributor
+    // Look up contributor (only active volunteers can login)
     const { data: contributor, error: lookupErr } = await supabase
       .from("contributors")
-      .select("id, token, password_hash, name, reset_code, reset_code_expires_at, reset_code_attempts")
+      .select("id, token, password_hash, name, reset_code, reset_code_expires_at, reset_code_attempts, is_active")
       .eq("email", normalizedEmail)
+      .eq("is_active", true)
       .maybeSingle();
 
     if (lookupErr) {
