@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Printer, Users, Target, LogOut, Plus, Loader2,
   BarChart3, Package, Heart, Accessibility, Link2, Eye,
-  ArrowUpDown, ChevronUp, ChevronDown, Layers,
+  ArrowUpDown, ChevronUp, ChevronDown, Layers, UserX, UserCheck,
 } from "lucide-react";
 import {
   Dialog,
@@ -54,6 +54,31 @@ const Admin = () => {
       toast({ title: "Erro ao copiar", variant: "destructive" });
     }
   };
+
+  const toggleContributorActive = async (contributorId: string, currentStatus: boolean) => {
+    const newStatus = !currentStatus;
+    const { error } = await supabase
+      .from("contributors")
+      .update({ is_active: newStatus })
+      .eq("id", contributorId);
+
+    if (error) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      queryClient.invalidateQueries({ queryKey: ["admin-contributors"] });
+      toast({
+        title: newStatus ? "Voluntário ativado" : "Voluntário desativado",
+        description: newStatus
+          ? "O voluntário voltará a aparecer nas listas de atribuição."
+          : "O voluntário não aparecerá mais nas listas de atribuição de peças.",
+      });
+    }
+  };
+
   const queryClient = useQueryClient();
   const { data: stats } = useDashboardStats();
   const [activeTab, setActiveTab] = useState<"overview" | "contributors" | "project-instances" | "requests" | "donations" | "initiatives">("overview");
@@ -334,7 +359,10 @@ const Admin = () => {
                           <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
                             <td className="p-4">
                               <div className="flex items-center gap-1.5">
-                                <p className="font-medium text-foreground">{c.name}</p>
+                                <p className={`font-medium ${(c as any).is_active === false ? 'text-muted-foreground line-through' : 'text-foreground'}`}>{c.name}</p>
+                                {(c as any).is_active === false && (
+                                  <Badge variant="secondary" className="bg-muted text-muted-foreground text-xs">Inativo</Badge>
+                                )}
                                 {!(c as any).build_volume_ok && (
                                   <span title="Volume de impressão não confirmado" className="text-destructive text-xs">⚠️</span>
                                 )}
@@ -365,6 +393,19 @@ const Admin = () => {
                             <td className="p-4"><Badge variant="secondary">{c.region}</Badge></td>
                             <td className="p-4 text-right">
                               <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  title={(c as any).is_active === false ? "Ativar voluntário" : "Desativar voluntário"}
+                                  onClick={() => toggleContributorActive(c.id, (c as any).is_active ?? true)}
+                                >
+                                  {(c as any).is_active === false ? (
+                                    <UserCheck className="w-3.5 h-3.5 text-green-600" />
+                                  ) : (
+                                    <UserX className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
+                                  )}
+                                </Button>
                                 {(c as any).token && (
                                   <Button
                                     variant="ghost"

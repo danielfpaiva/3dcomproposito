@@ -48,6 +48,7 @@ interface Contributor {
   experience_level?: string;
   build_volume_ok?: boolean;
   build_plate_size?: string | null;
+  is_active?: boolean;
 }
 
 const statusLabels: Record<string, string> = {
@@ -235,7 +236,8 @@ const ProjectInstancesList = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contributors")
-        .select("id, name, printer_models, region, materials, experience_level, build_volume_ok, build_plate_size")
+        .select("id, name, printer_models, region, materials, experience_level, build_volume_ok, build_plate_size, is_active")
+        .eq("is_active", true)
         .order("name");
       if (error) throw error;
       return data as Contributor[];

@@ -228,6 +228,7 @@ export type Database = {
           email: string
           experience_level: string
           id: string
+          is_active: boolean
           location: string
           materials: string[]
           name: string
@@ -253,6 +254,7 @@ export type Database = {
           email: string
           experience_level?: string
           id?: string
+          is_active?: boolean
           location: string
           materials?: string[]
           name: string
@@ -278,6 +280,7 @@ export type Database = {
           email?: string
           experience_level?: string
           id?: string
+          is_active?: boolean
           location?: string
           materials?: string[]
           name?: string
