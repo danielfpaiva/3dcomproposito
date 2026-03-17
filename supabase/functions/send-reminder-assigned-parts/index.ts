@@ -172,13 +172,28 @@ Deno.serve(async (req) => {
   <div style="padding: 30px; background: #f9f9f9;">
     <p>Olá <strong>${escapeHtml(contributor.name)}</strong>,</p>
 
-    <p>
-      Este é um <strong>lembrete amigável</strong> sobre ${partCount === 1 ? "a peça que lhe foi atribuída" : `as <strong>${partCount} peças</strong> que lhe foram atribuídas`}
-      no projeto <strong>${escapeHtml(project.name)}</strong>.
-    </p>
+    <div style="background: #fef2f2; padding: 20px; border-left: 4px solid #ef4444; margin: 20px 0; border-radius: 0 8px 8px 0;">
+      <p style="margin: 0 0 15px; font-size: 14px; color: #7f1d1d;">
+        Antes de mais, um <strong>obrigado</strong> a todos os que se juntaram como voluntários nesta missão. ❤️
+      </p>
+      <p style="margin: 0 0 15px; font-size: 14px; color: #7f1d1d;">
+        No entanto, <strong>precisamos de ser mais ágeis</strong>. Os nossos projetos ainda têm muitas peças por concluir,
+        e se mantivermos este ritmo, a entrega das cadeiras será penosamente lenta.
+      </p>
+      <p style="margin: 0 0 15px; font-size: 14px; color: #7f1d1d;">
+        <strong>O nosso objetivo é mudar a vida destas crianças AGORA.</strong> Se alguém, por qualquer motivo, não puder imprimir as peças que lhe foram atribuídas neste momento,
+        por favor <strong>avise-nos de imediato</strong>.
+      </p>
+      <p style="margin: 0 0 15px; font-size: 14px; color: #7f1d1d;">
+        Não há problema nenhum, nós simplesmente realocamos essa peça a outro voluntário para garantirmos que o projeto não fica parado.
+      </p>
+      <p style="margin: 0; font-size: 15px; font-weight: bold; color: #991b1b;">
+        Contamos convosco para pôr estas cadeiras a rolar! 🚀
+      </p>
+    </div>
 
     <p>
-      Verificámos que ${partCount === 1 ? "a peça ainda está" : "as peças ainda estão"} com o estado <strong>"Atribuído"</strong>,
+      Verificámos que ${partCount === 1 ? "a peça que lhe foi atribuída ainda está" : `as <strong>${partCount} peças</strong> que lhe foram atribuídas ainda estão`} com o estado <strong>"Atribuído"</strong>,
       o que indica que ainda não ${partCount === 1 ? "começou" : "começaram"} a ser ${partCount === 1 ? "impressa" : "impressas"}.
     </p>
 
