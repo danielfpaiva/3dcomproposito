@@ -544,6 +544,61 @@ const ProjectInstancesList = () => {
     }
   };
 
+  const handleNotifySingleContributor = async (contributorId: string) => {
+    if (!selectedProject) return;
+
+    // Find parts assigned to this contributor in current project
+    const contributorParts = parts.filter(
+      (p) => p.assigned_contributor_id === contributorId
+    );
+
+    if (contributorParts.length === 0) {
+      toast({
+        title: "Nenhuma peça atribuída",
+        description: "Este voluntário não tem peças atribuídas neste projeto.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const partIds = contributorParts.map((p) => p.id);
+    const contributor = contributors.find((c) => c.id === contributorId);
+
+    setSendingNotifications(true);
+
+    try {
+      const { error } = await supabase.functions.invoke("notify-part-allocated", {
+        body: { contributor_id: contributorId, part_ids: partIds },
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+      });
+
+      if (error) {
+        console.error(`Failed for contributor ${contributorId}:`, error);
+        toast({
+          title: "Erro ao enviar notificação",
+          description: error.message || "Erro desconhecido",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Notificação enviada!",
+          description: `Email enviado para ${contributor?.name || "voluntário"} com ${partIds.length} peça(s).`,
+        });
+      }
+    } catch (err) {
+      console.error(`Exception for contributor ${contributorId}:`, err);
+      toast({
+        title: "Erro ao enviar notificação",
+        description: "Erro ao invocar função de email.",
+        variant: "destructive",
+      });
+    }
+
+    setSendingNotifications(false);
+  };
+
   const handleNotifyVolunteers = async () => {
     if (!selectedProject) return;
 
@@ -826,17 +881,37 @@ const ProjectInstancesList = () => {
                             )}
                           </td>
                           <td className="px-4 py-3">
-                            {updatingPartId === part.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                            ) : (
-                              <PartAssignmentSelect
-                                value={part.assigned_contributor_id}
-                                contributors={contributors}
-                                onAssign={(contributorId) => handleAssignPart(part.id, contributorId)}
-                                allocatedContributorIds={allocatedContributorIds}
-                                contributorPartCounts={contributorPartCounts}
-                              />
-                            )}
+                            <div className="flex items-center gap-2">
+                              {updatingPartId === part.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                              ) : (
+                                <>
+                                  <PartAssignmentSelect
+                                    value={part.assigned_contributor_id}
+                                    contributors={contributors}
+                                    onAssign={(contributorId) => handleAssignPart(part.id, contributorId)}
+                                    allocatedContributorIds={allocatedContributorIds}
+                                    contributorPartCounts={contributorPartCounts}
+                                  />
+                                  {part.assigned_contributor_id && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 flex-shrink-0"
+                                      title={`Notificar ${contributors.find((c) => c.id === part.assigned_contributor_id)?.name || "voluntário"}`}
+                                      onClick={() => handleNotifySingleContributor(part.assigned_contributor_id!)}
+                                      disabled={sendingNotifications}
+                                    >
+                                      {sendingNotifications ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                      ) : (
+                                        <Send className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
+                                      )}
+                                    </Button>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}
