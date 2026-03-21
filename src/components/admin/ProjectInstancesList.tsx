@@ -475,13 +475,21 @@ const ProjectInstancesList = () => {
 
       // Send reallocation email if previous volunteer exists
       if (isReallocation) {
-        // TODO: Call notify-reallocation edge function
-        console.log("Reallocation detected:", {
-          partId,
-          previousContributorId,
-          newContributorId: contributorId,
-          partName: currentPart?.part_name,
-        });
+        try {
+          await supabase.functions.invoke("notify-reallocation", {
+            body: {
+              previous_contributor_id: previousContributorId,
+              part_id: partId,
+            },
+            headers: {
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+          });
+          console.log("Reallocation email sent to previous volunteer");
+        } catch (error) {
+          console.error("Failed to send reallocation email:", error);
+          // Don't block the main flow if email fails
+        }
       }
 
       toast({

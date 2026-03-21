@@ -11,6 +11,7 @@ import Admin from "./pages/Admin";
 import Donate from "./pages/Donate";
 import Request from "./pages/Request";
 import Recursos from "./pages/Recursos";
+import Unsubscribe from "./pages/Unsubscribe";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/donate" element={<Donate />} />
           <Route path="/request" element={<Request />} />
           <Route path="/recursos" element={<Recursos />} />
+          <Route path="/unsubscribe" element={<Unsubscribe />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
