@@ -166,6 +166,7 @@ const ProjectInstancesList = () => {
   const [newRequestId, setNewRequestId] = useState("");
   const [creating, setCreating] = useState(false);
   const [updatingPartId, setUpdatingPartId] = useState<string | null>(null);
+  const [highlightedPartId, setHighlightedPartId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<ProjectInstance | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -215,7 +216,7 @@ const ProjectInstancesList = () => {
     },
   });
 
-  // Fetch parts for selected project
+  // Fetch parts for selected project (ordered by part_name for stable list)
   const { data: parts = [], isLoading: loadingParts } = useQuery({
     queryKey: ["project-instance-parts", selectedId],
     queryFn: async () => {
@@ -223,7 +224,7 @@ const ProjectInstancesList = () => {
         .from("project_instance_parts")
         .select("*")
         .eq("project_instance_id", selectedId!)
-        .order("created_at");
+        .order("part_name");
       if (error) throw error;
       return data as ProjectInstancePart[];
     },
@@ -447,6 +448,12 @@ const ProjectInstancesList = () => {
   // Assign contributor to part
   const handleAssignPart = async (partId: string, contributorId: string | null) => {
     setUpdatingPartId(partId);
+
+    // Get current part data to detect reallocation
+    const currentPart = parts.find((p) => p.id === partId);
+    const previousContributorId = currentPart?.assigned_contributor_id;
+    const isReallocation = previousContributorId && contributorId && previousContributorId !== contributorId;
+
     const { error } = await supabase
       .from("project_instance_parts")
       .update({
@@ -460,7 +467,22 @@ const ProjectInstancesList = () => {
     } else {
       queryClient.invalidateQueries({ queryKey: ["project-instance-parts", selectedId] });
       queryClient.invalidateQueries({ queryKey: ["allocated-contributor-ids", selectedId] });
-      queryClient.invalidateQueries({ queryKey: ["contributor-part-counts", selectedId] });
+      queryClient.invalidateQueries({ queryKey: ["contributor-part-counts-global"] });
+
+      // Highlight the edited row
+      setHighlightedPartId(partId);
+      setTimeout(() => setHighlightedPartId(null), 3000);
+
+      // Send reallocation email if previous volunteer exists
+      if (isReallocation) {
+        // TODO: Call notify-reallocation edge function
+        console.log("Reallocation detected:", {
+          partId,
+          previousContributorId,
+          newContributorId: contributorId,
+          partName: currentPart?.part_name,
+        });
+      }
 
       toast({
         title: contributorId ? "Voluntário atribuído" : "Atribuição removida",
@@ -853,7 +875,12 @@ const ProjectInstancesList = () => {
                     </thead>
                     <tbody className="divide-y divide-border">
                       {parts.map((part) => (
-                        <tr key={part.id} className="bg-card hover:bg-muted/20 transition-colors">
+                        <tr
+                          key={part.id}
+                          className={`bg-card hover:bg-muted/20 transition-all duration-300 ${
+                            highlightedPartId === part.id ? 'bg-green-100 dark:bg-green-900/30' : ''
+                          }`}
+                        >
                           <td className="px-4 py-3">
                             <div className="font-medium">{part.part_name}</div>
                             {part.category && <div className="text-xs text-muted-foreground">{part.category}</div>}
