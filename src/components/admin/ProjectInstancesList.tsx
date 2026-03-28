@@ -191,14 +191,14 @@ const ProjectInstancesList = () => {
     },
   });
 
-  // Fetch pending/approved requests for dropdown
+  // Fetch pending/approved requests for dropdown (including em_andamento for current request)
   const { data: openRequests = [] } = useQuery({
     queryKey: ["open-requests"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("beneficiary_requests")
         .select("id, contact_name, region, status")
-        .in("status", ["pendente", "em_avaliacao", "aprovado"])
+        .in("status", ["pendente", "em_avaliacao", "aprovado", "em_andamento"])
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
