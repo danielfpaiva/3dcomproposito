@@ -172,6 +172,8 @@ const ProjectInstancesList = () => {
   const [deleting, setDeleting] = useState(false);
   const [editingProjectName, setEditingProjectName] = useState(false);
   const [editedProjectName, setEditedProjectName] = useState("");
+  const [editingRequest, setEditingRequest] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [sendingReminders, setSendingReminders] = useState(false);
   const [sendingNotifications, setSendingNotifications] = useState(false);
 
@@ -532,6 +534,47 @@ const ProjectInstancesList = () => {
     }
   };
 
+  const handleChangeRequest = async () => {
+    if (!selectedProject || !selectedRequestId) return;
+
+    const previousRequestId = selectedProject.request_id;
+
+    // Update the project's request_id
+    const { error: projectError } = await supabase
+      .from("project_instances")
+      .update({ request_id: selectedRequestId })
+      .eq("id", selectedProject.id);
+
+    if (projectError) {
+      toast({ title: "Erro", description: projectError.message, variant: "destructive" });
+      return;
+    }
+
+    // Update previous request status to "pendente" (if there was one)
+    if (previousRequestId) {
+      await supabase
+        .from("beneficiary_requests")
+        .update({ status: "pendente" })
+        .eq("id", previousRequestId);
+    }
+
+    // Update new request status to "em_andamento"
+    const { error: requestError } = await supabase
+      .from("beneficiary_requests")
+      .update({ status: "em_andamento" })
+      .eq("id", selectedRequestId);
+
+    if (requestError) {
+      toast({ title: "Aviso", description: "Pedido associado mas estado não atualizado.", variant: "destructive" });
+    }
+
+    // Refresh queries
+    queryClient.invalidateQueries({ queryKey: ["project-instances"] });
+    queryClient.invalidateQueries({ queryKey: ["open-requests"] });
+    setEditingRequest(false);
+    toast({ title: "Pedido alterado", description: "O pedido associado foi alterado com sucesso." });
+  };
+
   const handleSendReminders = async () => {
     if (!selectedProject) return;
 
@@ -853,10 +896,47 @@ const ProjectInstancesList = () => {
                     {selectedProject.initiatives?.name} · {parts.filter((p) => p.status !== "unassigned").length}/{parts.length} peças atribuídas ·{" "}
                     {parts.filter((p) => ["printed", "shipped", "complete"].includes(p.status)).length} concluídas
                   </p>
-                  {selectedProject.beneficiary_requests?.contact_name && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Pedido: {selectedProject.beneficiary_requests.contact_name} — {selectedProject.beneficiary_requests.region}
-                    </p>
+                  {editingRequest ? (
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <Select
+                        value={selectedRequestId || ""}
+                        onValueChange={setSelectedRequestId}
+                      >
+                        <SelectTrigger className="h-7 text-xs w-[300px]">
+                          <SelectValue placeholder="Selecionar pedido..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {openRequests.map((req) => (
+                            <SelectItem key={req.id} value={req.id} className="text-xs">
+                              {req.contact_name} — {req.region} ({req.status})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button size="sm" variant="ghost" onClick={handleChangeRequest} disabled={!selectedRequestId}>
+                        <Check className="w-3.5 h-3.5 text-green-600" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditingRequest(false)}>
+                        <X className="w-3.5 h-3.5 text-red-600" />
+                      </Button>
+                    </div>
+                  ) : (
+                    selectedProject.beneficiary_requests?.contact_name && (
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-xs text-muted-foreground">
+                          Pedido: {selectedProject.beneficiary_requests.contact_name} — {selectedProject.beneficiary_requests.region}
+                        </p>
+                        <button
+                          onClick={() => {
+                            setSelectedRequestId(selectedProject.request_id);
+                            setEditingRequest(true);
+                          }}
+                          className="text-muted-foreground hover:text-accent transition-colors"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )
                   )}
                 </div>
               </div>
