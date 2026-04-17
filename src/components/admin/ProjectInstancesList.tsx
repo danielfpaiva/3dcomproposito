@@ -109,7 +109,7 @@ const ProjectCard = ({
         .eq("project_instance_id", project.id);
       if (error) throw error;
       const total = data.length;
-      const done = data.filter((p) => ["printed", "shipped", "complete"].includes(p.status)).length;
+      const done = data.filter((p) => ["shipped", "complete"].includes(p.status)).length;
       return { total, done };
     },
   });
@@ -894,7 +894,7 @@ const ProjectInstancesList = () => {
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {selectedProject.initiatives?.name} · {parts.filter((p) => p.status !== "unassigned").length}/{parts.length} peças atribuídas ·{" "}
-                    {parts.filter((p) => ["printed", "shipped", "complete"].includes(p.status)).length} concluídas
+                    {parts.filter((p) => ["shipped", "complete"].includes(p.status)).length} concluídas
                   </p>
                   {editingRequest ? (
                     <div className="flex items-center gap-2 mt-0.5">
