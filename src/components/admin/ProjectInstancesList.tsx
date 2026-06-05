@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Loader2, ChevronRight, ChevronLeft, Package, Trash2, Pencil, Check, X, Bell, Send, Archive } from "lucide-react";
+import { Plus, Loader2, ChevronRight, ChevronLeft, Package, Trash2, Pencil, Check, X, Bell, Send, Archive, UserX } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -191,6 +191,9 @@ const ProjectInstancesList = () => {
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [sendingReminders, setSendingReminders] = useState(false);
   const [sendingNotifications, setSendingNotifications] = useState(false);
+  const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false);
+  const [contributorToDeactivate, setContributorToDeactivate] = useState<Contributor | null>(null);
+  const [deactivating, setDeactivating] = useState(false);
   const [projectTab, setProjectTab] = useState<"active" | "archived">("active");
 
   // Fetch initiatives (for dropdown)
@@ -792,6 +795,55 @@ const ProjectInstancesList = () => {
     });
   };
 
+  const handleDeactivateContributor = async () => {
+    if (!contributorToDeactivate) return;
+    setDeactivating(true);
+
+    const { error: deactivateError } = await supabase
+      .from("contributors")
+      .update({ is_active: false })
+      .eq("id", contributorToDeactivate.id);
+
+    if (deactivateError) {
+      toast({ title: "Erro ao desativar", description: deactivateError.message, variant: "destructive" });
+      setDeactivating(false);
+      return;
+    }
+
+    // Get all active project IDs (planning or in_progress)
+    const { data: activeProjectIds } = await supabase
+      .from("project_instances")
+      .select("id")
+      .in("status", ["planning", "in_progress"]);
+
+    if (activeProjectIds && activeProjectIds.length > 0) {
+      const { error: unassignError } = await supabase
+        .from("project_instance_parts")
+        .update({ assigned_contributor_id: null, status: "unassigned" })
+        .eq("assigned_contributor_id", contributorToDeactivate.id)
+        .in("project_instance_id", activeProjectIds.map((p) => p.id));
+
+      if (unassignError) {
+        toast({ title: "Voluntário desativado mas erro ao remover atribuições", description: unassignError.message, variant: "destructive" });
+      }
+    }
+
+    toast({
+      title: "Voluntário desativado",
+      description: `${contributorToDeactivate.name} foi desativado e removido de todas as peças em projetos ativos.`,
+    });
+
+    queryClient.invalidateQueries({ queryKey: ["admin-contributors"] });
+    queryClient.invalidateQueries({ queryKey: ["project-instance-parts"] });
+    queryClient.invalidateQueries({ queryKey: ["project-instance-part-counts"] });
+    queryClient.invalidateQueries({ queryKey: ["allocated-contributor-ids"] });
+    queryClient.invalidateQueries({ queryKey: ["contributor-part-counts-global"] });
+
+    setDeactivateDialogOpen(false);
+    setContributorToDeactivate(null);
+    setDeactivating(false);
+  };
+
   // --- LAYOUT: side-by-side (list + detail) ---
   return (
     <div className="space-y-6">
@@ -1080,20 +1132,37 @@ const ProjectInstancesList = () => {
                                     contributorPartCounts={contributorPartCounts}
                                   />
                                   {part.assigned_contributor_id && (
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7 flex-shrink-0"
-                                      title={`Notificar ${contributors.find((c) => c.id === part.assigned_contributor_id)?.name || "voluntário"}`}
-                                      onClick={() => handleNotifySingleContributor(part.assigned_contributor_id!)}
-                                      disabled={sendingNotifications}
-                                    >
-                                      {sendingNotifications ? (
-                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                      ) : (
-                                        <Send className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
-                                      )}
-                                    </Button>
+                                    <>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 flex-shrink-0"
+                                        title={`Notificar ${contributors.find((c) => c.id === part.assigned_contributor_id)?.name || "voluntário"}`}
+                                        onClick={() => handleNotifySingleContributor(part.assigned_contributor_id!)}
+                                        disabled={sendingNotifications}
+                                      >
+                                        {sendingNotifications ? (
+                                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                        ) : (
+                                          <Send className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
+                                        )}
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 flex-shrink-0"
+                                        title={`Desativar ${contributors.find((c) => c.id === part.assigned_contributor_id)?.name || "voluntário"}`}
+                                        onClick={() => {
+                                          const c = contributors.find((c) => c.id === part.assigned_contributor_id);
+                                          if (c) {
+                                            setContributorToDeactivate(c);
+                                            setDeactivateDialogOpen(true);
+                                          }
+                                        }}
+                                      >
+                                        <UserX className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
+                                      </Button>
+                                    </>
                                   )}
                                 </>
                               )}
@@ -1207,6 +1276,36 @@ const ProjectInstancesList = () => {
             >
               {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
               Apagar Projeto
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Deactivate Contributor AlertDialog */}
+      <AlertDialog open={deactivateDialogOpen} onOpenChange={setDeactivateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desativar Voluntário</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem a certeza que pretende desativar <strong>{contributorToDeactivate?.name}</strong>?
+              <br /><br />
+              Esta ação irá:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Desativar o voluntário em todo o sistema</li>
+                <li>Remover todas as suas atribuições em projetos ativos</li>
+                <li>As peças ficarão com estado "Não atribuído"</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deactivating}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeactivateContributor}
+              disabled={deactivating}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deactivating ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+              Desativar Voluntário
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

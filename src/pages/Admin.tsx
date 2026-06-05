@@ -11,7 +11,7 @@ import {
   Printer, Users, Target, LogOut, Plus, Loader2,
   BarChart3, Package, Heart, Accessibility, Link2, Eye,
   ArrowUpDown, ChevronUp, ChevronDown, Layers, UserX, UserCheck,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Archive,
 } from "lucide-react";
 import {
   Dialog,
@@ -96,6 +96,7 @@ const Admin = () => {
   const [groupBy, setGroupBy] = useState<"none" | "region" | "experience" | "can_ship">("region");
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [contributorTab, setContributorTab] = useState<"active" | "inactive">("active");
   const itemsPerPage = 20;
 
   useEffect(() => {
@@ -139,8 +140,12 @@ const Admin = () => {
 
 
   const printerModels = useMemo(() => [...new Set(contributors.flatMap((c) => (c as any).printer_models ?? []))].sort(), [contributors]);
+  const activeContributors = useMemo(() => contributors.filter((c) => (c as any).is_active !== false), [contributors]);
+  const inactiveContributors = useMemo(() => contributors.filter((c) => (c as any).is_active === false), [contributors]);
+  const tabContributors = contributorTab === "active" ? activeContributors : inactiveContributors;
+
   const filteredContributors = useMemo(() => {
-    return contributors.filter((c) => {
+    return tabContributors.filter((c) => {
       if (filterSearch && !c.name.toLowerCase().includes(filterSearch.toLowerCase())) return false;
       if (filterRegion !== "all" && c.region !== filterRegion) return false;
       if (filterPrinter !== "all" && !((c as any).printer_models ?? []).includes(filterPrinter)) return false;
@@ -152,7 +157,7 @@ const Admin = () => {
       if (filterCanShip === "no" && c.can_ship) return false;
       return true;
     });
-  }, [contributors, filterSearch, filterRegion, filterPrinter, filterMaterial, filterExperience, filterBuildVolume, filterCanShip]);
+  }, [tabContributors, filterSearch, filterRegion, filterPrinter, filterMaterial, filterExperience, filterBuildVolume, filterCanShip]);
 
   const getSortValue = (c: (typeof contributors)[0], key: typeof sortKey): string | number | boolean => {
     switch (key) {
@@ -303,6 +308,32 @@ const Admin = () => {
 
           {activeTab === "contributors" && (
             <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex rounded-lg bg-muted p-0.5">
+                  <button
+                    onClick={() => { setContributorTab("active"); setCurrentPage(1); }}
+                    className={`text-xs font-medium py-1.5 px-3 rounded-md transition-colors ${
+                      contributorTab === "active"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Ativos ({activeContributors.length})
+                  </button>
+                  <button
+                    onClick={() => { setContributorTab("inactive"); setCurrentPage(1); }}
+                    className={`text-xs font-medium py-1.5 px-3 rounded-md transition-colors flex items-center gap-1.5 ${
+                      contributorTab === "inactive"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Archive className="w-3 h-3" />
+                    Inativos ({inactiveContributors.length})
+                  </button>
+                </div>
+                <AddContributorDialog />
+              </div>
               <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
                 <ContributorsFilters
                   search={filterSearch}
@@ -321,7 +352,6 @@ const Admin = () => {
                   canShip={filterCanShip}
                   onCanShipChange={setFilterCanShip}
                 />
-                <AddContributorDialog />
               </div>
               <div className="flex flex-wrap items-center gap-3 mb-3">
                 <span className="text-sm text-muted-foreground">Agrupar por:</span>
