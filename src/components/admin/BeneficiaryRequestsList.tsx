@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, Plus, X } from "lucide-react";
+import { Loader2, Eye, Plus, X, Archive } from "lucide-react";
 import { Accessibility } from "lucide-react";
 import {
   Dialog,
@@ -65,6 +65,7 @@ const BeneficiaryRequestsList = () => {
   const [saving, setSaving] = useState(false);
   const [notes, setNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
+  const [requestTab, setRequestTab] = useState<"active" | "archived">("active");
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ["admin-requests"],
@@ -140,15 +141,39 @@ const BeneficiaryRequestsList = () => {
     setSavingNotes(false);
   };
 
+  const activeRequests = requests.filter((r: any) => r.status !== "concluido");
+  const archivedRequests = requests.filter((r: any) => r.status === "concluido");
+  const displayedRequests = requestTab === "active" ? activeRequests : archivedRequests;
+
   const typeLabel = (type: string) =>
     BENEFICIARY_TYPES.find((t) => t.value === type)?.label ?? type;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
-          Pedidos de Beneficiários ({requests.length})
-        </h3>
+        <div className="flex rounded-lg bg-muted p-0.5">
+          <button
+            onClick={() => setRequestTab("active")}
+            className={`text-xs font-medium py-1.5 px-3 rounded-md transition-colors ${
+              requestTab === "active"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Ativos ({activeRequests.length})
+          </button>
+          <button
+            onClick={() => setRequestTab("archived")}
+            className={`text-xs font-medium py-1.5 px-3 rounded-md transition-colors flex items-center gap-1.5 ${
+              requestTab === "archived"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Archive className="w-3 h-3" />
+            Concluídos ({archivedRequests.length})
+          </button>
+        </div>
         <Button size="sm" onClick={() => setShowCreateDialog(true)} className="gap-1.5">
           <Plus className="w-4 h-4" /> Novo Pedido
         </Button>
@@ -156,10 +181,12 @@ const BeneficiaryRequestsList = () => {
 
       {isLoading ? (
         <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
-      ) : requests.length === 0 ? (
+      ) : displayedRequests.length === 0 ? (
         <div className="bg-card rounded-2xl border border-border p-12 text-center">
           <Accessibility className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Ainda sem pedidos de ajuda.</p>
+          <p className="text-sm text-muted-foreground">
+            {requestTab === "active" ? "Sem pedidos ativos." : "Sem pedidos concluídos."}
+          </p>
         </div>
       ) : (
         <div className="bg-card rounded-2xl border border-border overflow-hidden">
@@ -177,7 +204,7 @@ const BeneficiaryRequestsList = () => {
                 </tr>
               </thead>
               <tbody>
-                {requests.map((r: any) => (
+                {displayedRequests.map((r: any) => (
                   <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
                     <td className="p-4">
                       <p className="font-medium text-foreground">{r.contact_name}</p>
