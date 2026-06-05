@@ -619,7 +619,7 @@ const Portal = () => {
                           <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Atribuições Ativas</h3>
                           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
                             <p className="text-amber-900">
-                              <strong>📦 Envio de peças:</strong> Quando as peças estiverem prontas, devem ser enviadas para a <strong>Smart3D</strong>.
+                              <strong>📦 Envio de peças:</strong> Quando as peças estiverem prontas, devem ser enviadas para a <strong>Smart3D</strong>. Por favor, inclua um papel com o <strong>código da peça</strong> (ex: NOR01-001) dentro da embalagem para facilitar a identificação.
                             </p>
                           </div>
                           {Object.entries(partsByProject).map(([projectName, parts]) => (
