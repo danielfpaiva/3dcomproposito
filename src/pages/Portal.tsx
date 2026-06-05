@@ -630,7 +630,12 @@ const Portal = () => {
                               {parts.map((part) => (
                                 <div key={part.id} className="p-3 bg-muted/30 rounded-xl space-y-2">
                                   <div className="flex items-center justify-between">
-                                    <span className="text-sm font-medium text-foreground">{part.part_name}</span>
+                                    <div className="flex items-center gap-2">
+                                      {part.part_code && (
+                                        <code className="text-xs font-mono font-semibold bg-primary/10 text-primary px-1.5 py-0.5 rounded">{part.part_code}</code>
+                                      )}
+                                      <span className="text-sm font-medium text-foreground">{part.part_name}</span>
+                                    </div>
                                     <Badge className={statusColor[part.status] ?? ""}>
                                       {statusLabels[part.status] ?? part.status}
                                     </Badge>

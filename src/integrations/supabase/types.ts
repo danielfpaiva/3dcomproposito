@@ -175,6 +175,7 @@ export type Database = {
           project_instance_id: string
           initiative_part_id: string | null
           part_name: string
+          part_code: string | null
           category: string | null
           material: string | null
           file_url: string | null
@@ -188,6 +189,7 @@ export type Database = {
           project_instance_id: string
           initiative_part_id?: string | null
           part_name: string
+          part_code?: string | null
           category?: string | null
           material?: string | null
           file_url?: string | null
@@ -201,6 +203,7 @@ export type Database = {
           project_instance_id?: string
           initiative_part_id?: string | null
           part_name?: string
+          part_code?: string | null
           category?: string | null
           material?: string | null
           file_url?: string | null

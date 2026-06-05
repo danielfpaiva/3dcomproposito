@@ -51,6 +51,16 @@ interface Contributor {
   is_active?: boolean;
 }
 
+const REGION_PREFIXES: Record<string, string> = {
+  norte: "NOR",
+  centro: "CEN",
+  lisboa: "LIS",
+  alentejo: "ALT",
+  algarve: "ALG",
+  acores: "ACO",
+  madeira: "MAD",
+};
+
 const statusLabels: Record<string, string> = {
   planning: "Planeamento",
   in_progress: "Em curso",
@@ -105,12 +115,14 @@ const ProjectCard = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("project_instance_parts")
-        .select("status")
+        .select("status, part_code")
         .eq("project_instance_id", project.id);
       if (error) throw error;
       const total = data.length;
       const done = data.filter((p) => ["shipped", "complete"].includes(p.status)).length;
-      return { total, done };
+      const firstCode = data.find((p) => p.part_code)?.part_code;
+      const projectCode = firstCode ? firstCode.split("-")[0] : null;
+      return { total, done, projectCode };
     },
   });
 
@@ -126,6 +138,9 @@ const ProjectCard = ({
       }`}
     >
       <div className="flex items-center gap-2 flex-wrap mb-1">
+        {partCounts?.projectCode && (
+          <code className="text-xs font-mono font-semibold bg-primary/10 text-primary px-1.5 py-0.5 rounded">{partCounts.projectCode}</code>
+        )}
         <span className="font-medium text-sm">{project.name}</span>
         <Badge className={`text-[10px] ${statusColors[project.status] ?? ""}`}>
           {statusLabels[project.status] ?? project.status}
@@ -323,10 +338,25 @@ const ProjectInstancesList = () => {
     if (tplError) {
       toast({ title: "Projeto criado mas erro ao copiar peças", description: tplError.message, variant: "destructive" });
     } else if (templateParts && templateParts.length > 0) {
-      const partsToInsert = templateParts.map((tp) => ({
+      // Determine region prefix from request
+      const selectedRequest = openRequests.find((r) => r.id === newRequestId);
+      const regionPrefix = REGION_PREFIXES[selectedRequest?.region ?? ""] ?? "GEN";
+
+      // Count existing projects in this region to get sequence number
+      const { count: regionProjectCount } = await supabase
+        .from("project_instances")
+        .select("id, beneficiary_requests!inner(region)", { count: "exact", head: true })
+        .eq("beneficiary_requests.region", selectedRequest?.region ?? "")
+        .neq("id", project.id);
+
+      const projectSeq = (regionProjectCount ?? 0) + 1;
+      const projectPrefix = `${regionPrefix}${String(projectSeq).padStart(2, "0")}`;
+
+      const partsToInsert = templateParts.map((tp, idx) => ({
         project_instance_id: project.id,
         initiative_part_id: tp.id,
         part_name: tp.part_name,
+        part_code: `${projectPrefix}-${String(idx + 1).padStart(3, "0")}`,
         category: tp.category,
         material: tp.material,
         file_url: tp.file_url,
@@ -990,6 +1020,7 @@ const ProjectInstancesList = () => {
                   <table className="w-full text-sm">
                     <thead className="bg-muted/50">
                       <tr>
+                        <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Código</th>
                         <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Peça</th>
                         <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Material</th>
                         <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Estado</th>
@@ -1004,6 +1035,11 @@ const ProjectInstancesList = () => {
                             highlightedPartId === part.id ? 'bg-green-100 dark:bg-green-900/30' : ''
                           }`}
                         >
+                          <td className="px-4 py-3">
+                            {part.part_code && (
+                              <code className="text-xs font-mono font-semibold text-primary">{part.part_code}</code>
+                            )}
+                          </td>
                           <td className="px-4 py-3">
                             <div className="font-medium">{part.part_name}</div>
                             {part.category && <div className="text-xs text-muted-foreground">{part.category}</div>}
