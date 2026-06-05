@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Loader2, ChevronRight, ChevronLeft, Package, Trash2, Pencil, Check, X, Bell, Send } from "lucide-react";
+import { Plus, Loader2, ChevronRight, ChevronLeft, Package, Trash2, Pencil, Check, X, Bell, Send, Archive } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -176,6 +176,7 @@ const ProjectInstancesList = () => {
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [sendingReminders, setSendingReminders] = useState(false);
   const [sendingNotifications, setSendingNotifications] = useState(false);
+  const [projectTab, setProjectTab] = useState<"active" | "archived">("active");
 
   // Fetch initiatives (for dropdown)
   const { data: initiatives = [] } = useQuery({
@@ -283,6 +284,10 @@ const ProjectInstancesList = () => {
     },
   });
 
+  const activeProjects = projects.filter((p) => !["completed", "cancelled"].includes(p.status));
+  const archivedProjects = projects.filter((p) => ["completed", "cancelled"].includes(p.status));
+  const displayedProjects = projectTab === "active" ? activeProjects : archivedProjects;
+
   const selectedProject = projects.find((p) => p.id === selectedId);
 
   // Create project from initiative
@@ -366,6 +371,12 @@ const ProjectInstancesList = () => {
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
       return;
+    }
+
+    if (["completed", "cancelled"].includes(status)) {
+      setProjectTab("archived");
+    } else {
+      setProjectTab("active");
     }
 
     // Update request status based on project status
@@ -775,13 +786,37 @@ const ProjectInstancesList = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* LEFT: project list (1 column) */}
         <div className="lg:col-span-1 space-y-3">
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Projetos ({projects.length})</h3>
+          <div className="flex rounded-lg bg-muted p-0.5">
+            <button
+              onClick={() => setProjectTab("active")}
+              className={`flex-1 text-xs font-medium py-1.5 px-3 rounded-md transition-colors ${
+                projectTab === "active"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Ativos ({activeProjects.length})
+            </button>
+            <button
+              onClick={() => setProjectTab("archived")}
+              className={`flex-1 text-xs font-medium py-1.5 px-3 rounded-md transition-colors flex items-center justify-center gap-1.5 ${
+                projectTab === "archived"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Archive className="w-3 h-3" />
+              Concluídos ({archivedProjects.length})
+            </button>
+          </div>
           {isLoading ? (
             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
-          ) : projects.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">Sem projetos. Crie o primeiro acima!</p>
+          ) : displayedProjects.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              {projectTab === "active" ? "Sem projetos ativos. Crie o primeiro acima!" : "Sem projetos concluídos."}
+            </p>
           ) : (
-            projects.map((project) => (
+            displayedProjects.map((project) => (
               <ProjectCard
                 key={project.id}
                 project={project}
