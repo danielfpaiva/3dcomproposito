@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Eye, Plus, X, Archive } from "lucide-react";
 import { Accessibility } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ const STATUS_LABELS: Record<string, string> = {
   aprovado: "Aprovado",
   em_andamento: "Em andamento",
   concluido: "Concluído",
+  rejeitado: "Rejeitado",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -42,6 +44,7 @@ const STATUS_COLORS: Record<string, string> = {
   aprovado: "bg-primary/10 text-primary",
   em_andamento: "bg-accent/20 text-accent",
   concluido: "bg-success/10 text-success",
+  rejeitado: "bg-destructive/10 text-destructive",
 };
 
 const emptyForm = {
@@ -66,6 +69,10 @@ const BeneficiaryRequestsList = () => {
   const [notes, setNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
   const [requestTab, setRequestTab] = useState<"active" | "archived">("active");
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectRequestId, setRejectRequestId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejecting, setRejecting] = useState(false);
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ["admin-requests"],
@@ -111,6 +118,13 @@ const BeneficiaryRequestsList = () => {
   };
 
   const handleStatusChange = async (requestId: string, status: string) => {
+    if (status === "rejeitado") {
+      setRejectRequestId(requestId);
+      setRejectReason("");
+      setRejectDialogOpen(true);
+      return;
+    }
+
     const { error } = await supabase
       .from("beneficiary_requests")
       .update({ status })
@@ -123,6 +137,43 @@ const BeneficiaryRequestsList = () => {
         setSelectedRequest((prev: any) => ({ ...prev, status }));
       }
     }
+  };
+
+  const handleReject = async () => {
+    if (!rejectRequestId || !rejectReason.trim()) return;
+    setRejecting(true);
+
+    const { error } = await supabase
+      .from("beneficiary_requests")
+      .update({ status: "rejeitado" })
+      .eq("id", rejectRequestId);
+
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      setRejecting(false);
+      return;
+    }
+
+    try {
+      await supabase.functions.invoke("notify-request-rejected", {
+        body: { request_id: rejectRequestId, reason: rejectReason.trim() },
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+      });
+      toast({ title: "Pedido rejeitado", description: "O email de notificação foi enviado ao contacto." });
+    } catch {
+      toast({ title: "Pedido rejeitado", description: "Estado atualizado mas o email não foi enviado.", variant: "destructive" });
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["admin-requests"] });
+    if (selectedRequest?.id === rejectRequestId) {
+      setSelectedRequest((prev: any) => ({ ...prev, status: "rejeitado" }));
+    }
+    setRejectDialogOpen(false);
+    setRejectRequestId(null);
+    setRejectReason("");
+    setRejecting(false);
   };
 
   const handleSaveNotes = async () => {
@@ -141,8 +192,8 @@ const BeneficiaryRequestsList = () => {
     setSavingNotes(false);
   };
 
-  const activeRequests = requests.filter((r: any) => r.status !== "concluido");
-  const archivedRequests = requests.filter((r: any) => r.status === "concluido");
+  const activeRequests = requests.filter((r: any) => !["concluido", "rejeitado"].includes(r.status));
+  const archivedRequests = requests.filter((r: any) => ["concluido", "rejeitado"].includes(r.status));
   const displayedRequests = requestTab === "active" ? activeRequests : archivedRequests;
 
   const typeLabel = (type: string) =>
@@ -377,6 +428,42 @@ const BeneficiaryRequestsList = () => {
               <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Cancelar</Button>
               <Button onClick={handleCreate} disabled={saving}>
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Criar Pedido"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject request dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={(open) => { if (!open && !rejecting) { setRejectDialogOpen(false); setRejectRequestId(null); setRejectReason(""); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rejeitar Pedido</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <p className="text-sm text-muted-foreground">
+              Indique o motivo da rejeição. Esta justificação será enviada por email ao contacto do pedido.
+            </p>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Motivo da rejeição *</label>
+              <Textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                rows={4}
+                placeholder="Explique o motivo pelo qual o pedido não pode ser aceite..."
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => { setRejectDialogOpen(false); setRejectRequestId(null); setRejectReason(""); }} disabled={rejecting}>
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleReject}
+                disabled={rejecting || !rejectReason.trim()}
+              >
+                {rejecting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                Rejeitar e Enviar Email
               </Button>
             </div>
           </div>
